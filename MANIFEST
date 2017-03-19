@@ -1,0 +1,18 @@
+.gitignore
+lib/HTTP/Upload/FlowJs.pm
+Makefile.PL
+MANIFEST			This list of files
+MANIFEST.SKIP
+META.json
+META.yml
+README
+README.mkdn
+t/003_http_upload_flowjs.t
+xt/99-changes.t
+xt/99-compile.t
+xt/99-manifest.t
+xt/99-pod.t
+xt/99-todo.t
+xt/99-unix-text.t
+xt/99-versions.t
+xt/99-synopsis.t
