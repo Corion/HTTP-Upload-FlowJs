@@ -26,13 +26,21 @@ plugins for L<Dancer> and L<Mojolicious> planned.
 
   my @parameter_names = (
     'file', # The name of the file
-    'flowChunkNumber', # The index of the chunk in the current upload. First chunk is 1 (no base-0 counting here).
+    'flowChunkNumber', # The index of the chunk in the current upload.
+                       # First chunk is 1 (no base-0 counting here).
     'flowTotalChunks', # The total number of chunks.
-    'flowChunkSize', # The general chunk size. Using this value and flowTotalSize you can calculate the total number of chunks. Please note that the size of the data received in the HTTP might be lower than flowChunkSize of this for the last chunk for a file.
+    'flowChunkSize', # The general chunk size. Using this value and
+                     # flowTotalSize you can calculate the total number of
+                     # chunks. Please note that the size of the data received in
+                     # the HTTP might be lower than flowChunkSize of this for
+                     # the last chunk for a file.
     'flowTotalSize', #  The total file size.
     'flowIdentifier', # A unique identifier for the file contained in the request.
-    'flowFilename', # The original file name (since a bug in Firefox results in the file name not being transmitted in chunk multipart posts).
-    'flowRelativePath', # The file's relative path when selecting a directory (defaults to file name in all browsers except Chrome).
+    'flowFilename', # The original file name (since a bug in Firefox results in
+                    # the file name not being transmitted in chunk
+                    # multipart posts).
+    'flowRelativePath', # The file's relative path when selecting a directory
+                        # (defaults to file name in all browsers except Chrome).
   );
 
   # In your POST handler for /upload:
@@ -82,7 +90,8 @@ plugins for L<Dancer> and L<Mojolicious> planned.
             or die $!;
         binmode $fh;
 
-        my( $ok, @unlink_chunks ) = $flowjs->combineChunks( \%info, undef, $fh, $digest );
+        my( $ok, @unlink_chunks )
+            = $flowjs->combineChunks( \%info, undef, $fh, $digest );
         unlink @unlink_chunks;
 
         # Notify backend that a file arrived
@@ -247,8 +256,8 @@ sub validateRequest( $self, $method, $info, $sessionId=undef ) {
 
     my @invalid;
 
-    my @required = qw(flowChunkNumber flowTotalChunks flowChunkSize flowTotalSize
-                      flowFilename flowIdentifier
+    my @required = qw(flowChunkNumber flowTotalChunks flowChunkSize
+                      flowTotalSize flowFilename flowIdentifier
                       );
     if( $method eq 'POST') {
         push @required, 'file', 'localChunkSize'
