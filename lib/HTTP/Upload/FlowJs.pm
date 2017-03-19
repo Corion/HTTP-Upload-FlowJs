@@ -15,7 +15,7 @@ use JSON qw(encode_json decode_json);
 
 =head1 NAME
 
-HTTP::Upload::FlowJs - handle flowjs HTTP uploads
+HTTP::Upload::FlowJs - handle resumable multi-part HTTP uploads with flowjs
 
 =head1 SYNOPSIS
 
