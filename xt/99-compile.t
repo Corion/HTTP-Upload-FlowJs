@@ -17,7 +17,7 @@ plan 'no_plan';
 my $last_version = undef;
 
 sub check {
-    return if (! m{(\.pm|\.pl) \z}xmsi);
+    return if (! m{(\.pm|\.pl|\.psgi) \z}xmsi);
 
     my ($stdout, $stderr, $exit) = capture(sub {
         system( $^X, '-Mblib', '-wc', $_ );
