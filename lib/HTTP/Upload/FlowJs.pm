@@ -620,7 +620,8 @@ check the upload type.
 sub sniffContentType( $self, $info, $sessionPrefix=undef ) {
     my( $content_type, $image_ext );
 
-    if( 200 == $self->chunkOK( $info, $sessionPrefix, 1 ) ) {
+    my( $status, @messages ) = $self->chunkOK( $info, $sessionPrefix, 1 );
+    if( 200 == $status ) {
         my $fh = $self->chunkFh( $info, $sessionPrefix, 1 );
         my $t = $self->mime->mime_type($fh);
         if( $t ) {
