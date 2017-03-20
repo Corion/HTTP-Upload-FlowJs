@@ -33,7 +33,7 @@ plugins for [Dancer](https://metacpan.org/pod/Dancer) and [Mojolicious](https://
       my $params = params();
 
       my %info;
-      @info{ @columns } = @{$params}{@parameter_names};
+      @info{ @parameter_names} } = @{$params}{@parameter_names};
       $info{ localChunkSize } = -s $params{ file };
       # or however you get the size of the uploaded chunk
 
@@ -92,7 +92,7 @@ plugins for [Dancer](https://metacpan.org/pod/Dancer) and [Mojolicious](https://
     sub GET_upload {
       my $params = params();
       my %info;
-      @info{ @columns } = @{$params}{@parameter_names};
+      @info{ @parameter_names} } = @{$params}{@parameter_names};
       my $flowjs = HTTP::Upload::FlowJs->new(
           incomingDirectory => $uploads,
           allowedContentType => sub { $_[0] =~ m!^image/! },
@@ -108,11 +108,16 @@ plugins for [Dancer](https://metacpan.org/pod/Dancer) and [Mojolicious](https://
           # We can determine the content type, and it's not an image
           return [415,[],["File type disallowed"]];
 
-      } elsif( $flowJs->chunkOK( $uploads, \%info, $session_id ) ) {
-          return [200, [], [] ];
-
       } else {
-          return [416, [], [] ]; # Return a non-permanent error
+          my( $status, @messages )
+              = $flowjs->chunkOK( $uploads, \%info, $session_id );
+          if( $status != 500 ) {
+              # 200 or 416
+              return [$status, [], [] ];
+          } else {
+              warn $_ for @messages;
+              return [$status, [], [] ];
+          };
       };
     };
 
