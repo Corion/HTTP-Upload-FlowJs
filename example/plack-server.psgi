@@ -169,13 +169,12 @@ sub GET_upload {
             return [$status, [], [] ];
         } else {
             # some malformed request
-            warn $_}) for @messages;
+            warn $_ for @messages;
             
             return [500, [], [] ];
         };
     };
 };
-
 
 builder {
     enable "Plack::Middleware::Static",
