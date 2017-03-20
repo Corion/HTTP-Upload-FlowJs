@@ -10,6 +10,7 @@ use File::Copy qw(cp mv);
 use Digest::SHA1;
 use File::Basename 'dirname';
 
+# This is used to keep the query parameters all in one place
 my @parameter_names = (
     'file', # The name of the file
     'flowChunkNumber', # The index of the chunk in the current upload.
@@ -70,7 +71,6 @@ my $app = sub {
         return [404,[],['No such file']]
     }
 };
-
 
 # In your POST handler for /upload:
 sub POST_upload {
