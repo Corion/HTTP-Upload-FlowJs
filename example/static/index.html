@@ -2,42 +2,32 @@
 <html>
   <head>
     <meta charset="utf-8">
-    <meta http-equiv="X-UA-Compatible" content="chrome=1">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>Perl + Flow.js file upload</title>
     <meta name="description"
           content="HTTP::Upload::Flow html5 file upload extension with Perl backend"/>
     <link rel="stylesheet" href="//netdna.bootstrapcdn.com/bootstrap/3.0.0/css/bootstrap.min.css">
     <script src="//code.jquery.com/jquery-3.2.1.min.js"></script>
 
-    <!-- <meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=no"> -->
     <script src="http://flowjs.github.io/ng-flow/bower_components/flow.js/dist/flow.js"></script>
   </head>
 <body>
-    <div class="wrapper">
+    <div class="container">
       <header>
-        <h1><span class="logo"></span>Angular HTML5 file upload</h1>
-        <p>Flow.js is a JavaScript library providing multiple simultaneous, stable and resumable uploads via the HTML5 File API. Library does not require third party dependencies.</p>
+        <h1><span class="logo"></span>Flow.js HTML5 file upload with Perl backend</h1>
+        <p>Flow.js is a JavaScript library providing multiple simultaneous,
+           stable and resumable uploads via the HTML5 File API. The library does
+           not require third party dependencies.</p>
 
         <div class="libs">
-          <p class="view"><a href="https://github.com/flowjs/flow.js">Flow.js file upload core library<small>flowjs/flow.js</small></a></p>
-
-          <ul>
-            <li><a href="https://github.com/flowjs/flow.js/tree/master/dist">Build</a></li>
-            <li><a href="https://github.com/flowjs/flow.js">View On GitHub</a></li>
-          </ul>
-
-          <p class="view"><a href="https://github.com/Corion/HTTP-Upload-FlowJs">flow.js Perl module<small>HTTP::Upload::FlowJs</small></a></p>
-<!--
-          <ul>
-            <li><a href="https://github.com/flowjs/flow-php-server/zipball/master">Download ZIP File</a></li>
-            <li><a href="https://github.com/flowjs/flow-php-server">View On GitHub</a></li>
-          </ul>
--->
+          <p class="view"><a href="https://github.com/flowjs/flow.js">Flow.js file upload core library <small>flowjs/flow.js</small></a></p>
+          <p class="view"><a href="https://github.com/Corion/HTTP-Upload-FlowJs">flow.js Perl module <small>HTTP::Upload::FlowJs</small></a></p>
           <div class="clear"></div>
         </div>
       </header>
       <section>
-        <div class="features">
+        <div class="features well">
           <span class="heading">Features:</span>
           <ul>
             <li>Pause/Resume upload</li>
@@ -58,9 +48,6 @@
           The library is designed to introduce fault-tolerance into the upload of large files through HTTP. This is done by splitting each file into small chunks. Then, whenever the upload of a chunk fails, uploading is retried until the procedure completes. This allows uploads to automatically resume uploading after a network connection is lost either locally or to the server. Additionally, it allows for users to pause, resume and even recover uploads without losing state because only the currently uploading chunks will be aborted, not the entire upload.
         </p>
 
-        <p>Flow.js file upload core library: <a href="https://github.com/flowjs/flow.js">https://github.com/flowjs/flow.js</a></p>
-
-
 <h3>
 <a name="basic-example" class="anchor" href="#basic-example"><span class="octicon octicon-link"></span></a>Basic upload</h3>
 
@@ -68,8 +55,10 @@
 This is just an example of flow.js and the Perl
 backend. Files are uploaded, but deleted soonish afterwards.</div>
 
-<div id="message">Drop files to upload here</div>
+<div id="message" class="well">Drop files to upload here</div>
 <span id="btnUpload" class="btn btn-default">Or click here to upload</span>
+<div id="uploadLog" scroll="auto">
+</div>
 <script>
 var flow;
 
@@ -106,6 +95,7 @@ if( !flow ) {
             console.log(file,message);
         });
         flow.on('fileError', function(file, message){
+            $('#uploadLog').append(message+"<br />");
             console.log(file, message);
         });
         flow.on('catchAll', function(message, x1, x2, x3){
