@@ -36,6 +36,7 @@ my $partial_uploads = $app_base . '/flowjs-temp-uploads/';
 my $flowjs = HTTP::Upload::FlowJs->new(
     incomingDirectory => $partial_uploads,
     allowedContentType => sub { $_[0] =~ m!^image/! },
+    maxFileSize => 1_000_000,
 );
 
 # Wipe all temporary files
