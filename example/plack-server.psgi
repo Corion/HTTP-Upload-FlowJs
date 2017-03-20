@@ -10,6 +10,12 @@ use File::Copy qw(cp mv);
 use Digest::SHA1;
 use File::Basename 'dirname';
 
+=head1 USAGE
+
+  plackup -a plack-server.psgi
+
+=cut
+
 # This is used to keep the query parameters all in one place
 my @parameter_names = (
     'file', # The name of the file
