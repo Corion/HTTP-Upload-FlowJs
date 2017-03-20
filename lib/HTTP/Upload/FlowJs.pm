@@ -123,11 +123,16 @@ plugins for L<Dancer> and L<Mojolicious> planned.
         # We can determine the content type, and it's not an image
         return [415,[],["File type disallowed"]];
 
-    } elsif( $flowJs->chunkOK( $uploads, \%info, $session_id ) ) {
-        return [200, [], [] ];
-
     } else {
-        return [416, [], [] ]; # Return a non-permanent error
+        my( $status, @messages )
+            = $flowjs->chunkOK( $uploads, \%info, $session_id );
+        if( $status != 500 ) {
+            # 200 or 416
+            return [$status, [], [] ];
+        } else {
+            warn $_ for @messages;
+            return [$status, [], [] ];
+        };
     };
   };
 
@@ -492,7 +497,6 @@ sub chunkName( $self, $info, $sessionPrefix=undef, $index=0 ) {
 sub chunkOK($self, $info, $sessionPrefix=undef, $index=0) {
     my @messages = $self->validateRequest( 'GET', $info, $sessionPrefix );
     if( @messages ) {
-        #warn "Not valid";
         return 500, @messages
     };
 
