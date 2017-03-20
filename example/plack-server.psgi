@@ -37,10 +37,15 @@ my $flowjs = HTTP::Upload::FlowJs->new(
     incomingDirectory => $partial_uploads,
     allowedContentType => sub { $_[0] =~ m!^image/! },
 );
-$flowjs->resetUploadDirectories;
-if(! -d $complete_uploads) {
-    mkdir $complete_uploads
-        or die "Couldn't create directory $complete_uploads for complete uploads: $!";
+
+# Wipe all temporary files
+#$flowjs->resetUploadDirectories;
+
+for ($complete_uploads, $partial_uploads) {
+    if(! -d $_) {
+        mkdir $complete_uploads
+            or die "Couldn't create directory $_: $!";
+    };
 };
 
 my $app = sub {
