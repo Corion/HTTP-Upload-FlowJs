@@ -12,10 +12,12 @@ Makefile$
 ^.*\.log
 ^.*\.swp$
 ^MYMETA.*
-^mychat-.*/
+^HTTP-Upload-FlowJs-.*/
 ^db/
 ^log/
 ^inspirations/
 ^local-lib/
 ^log/
 ^image_store/
+^example/flowjs-temp-uploads
+^example/user-uploads

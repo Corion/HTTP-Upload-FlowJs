@@ -12,4 +12,6 @@ db/
 log/
 local-lib/
 image_store/
+example/flowjs-temp-uploads
+example/user-uploads
 HTTP-Upload-FlowJs-*/
