@@ -34,18 +34,24 @@
             <li>Recover lost upload</li>
             <li>Error handling</li>
             <li>Drag and Drop with folder reader</li>
-            <li>Drop area animation</li>
             <li>Custom upload buttons</li>
             <li>Folder Upload</li>
             <li>Queue management</li>
-            <li>Image preview</li>
             <li>File validation</li>
             <li>Upload progress</li>
             <li>Chunk uploads</li>
           </ul>
         </div>
         <p>
-          The library is designed to introduce fault-tolerance into the upload of large files through HTTP. This is done by splitting each file into small chunks. Then, whenever the upload of a chunk fails, uploading is retried until the procedure completes. This allows uploads to automatically resume uploading after a network connection is lost either locally or to the server. Additionally, it allows for users to pause, resume and even recover uploads without losing state because only the currently uploading chunks will be aborted, not the entire upload.
+          The library is designed to introduce fault-tolerance into the upload
+          of large files through HTTP. This is done by splitting each file into
+          small chunks. Then, whenever the upload of a chunk fails, uploading is
+          retried until the procedure completes. This allows uploads to
+          automatically resume uploading after a network connection is lost
+          either locally or to the server. Additionally, it allows for users to
+          pause, resume and even recover uploads without losing state because
+          only the currently uploading chunks will be aborted, not the entire
+          upload.
         </p>
 
 <h3>
