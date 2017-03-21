@@ -200,10 +200,15 @@ sub new( $class, %options ) {
     $options{ maxFileSize } ||= 10_000_000;
     $options{ maxChunkSize } ||= 1024*1024;
     $options{ simultaneousUploads } ||= 3;
+    $options{ maxPendingUploads } ||= 1000;
     $options{ mime } ||= MIME::Detect->new();
     $options{ allowedContentType } ||= sub { 1 };
 
     bless \%options => $class;
+};
+
+sub incomingDirectory( $self ) {
+    $self->{incomingDirectory};
 };
 
 sub mime($self) {
@@ -594,7 +599,7 @@ sub disallowedContentType( $self, $info, $session=undef ) {
 
 =head2 C<< $flowjs->sniffContentType( $info, $session ) >>
 
-    my( $content_type, $image_ext ) = $flowjs->sniffContentType;
+    my( $content_type, $image_ext ) = $flowjs->sniffContentType( $info, $session );
     if( !defined $content_type ) {
         # we need more chunks uploaded to check the content type
 
@@ -633,6 +638,7 @@ sub sniffContentType( $self, $info, $sessionPrefix=undef ) {
         };
 
     } else {
+        warn "Chunk 1 not found (yet)?!";
         # Chunk 1 not uploaded/complete yet
     }
     return $content_type, $image_ext;
@@ -677,6 +683,71 @@ sub combineChunks( $self, $info, $sessionPrefix, $target_fh, $digest=undef ) {
         print { $target_fh } $content;
     };
     return $ok, @unlink_chunks
+}
+
+=head2 C<< $flowjs->pendingUploads >>
+
+  my $uploading = $flowjs->pendingUploads();
+
+In scalar context, returns the number of pending uploads. In list context,
+returns the list of filenames that belong to the pending uploads. This list
+can be larger than the number of pending uploads, as one upload can have more
+than one chunk.
+
+=cut
+
+sub pendingUploads( $self ) {
+    my @files;
+    my %uploads;
+
+    my $incoming = $self->incomingDirectory;
+    open my $dir, $incoming
+        or croak "Couldn't read incoming directory '%s': %s", $self->incomingDirectory, $!;
+    @files = sort 
+    map {
+            (my $upload = $_) =~ s!\.part\d+$!!;
+            $uploads{ $upload }++;
+            $_
+        } 
+    grep { -f }
+    map {
+        "$incoming/$_"
+    } readdir $dir;
+    
+    wantarray ? @files : scalar keys %uploads;
+}
+
+=head2 C<< $flowjs->staleUploads( $timeout, $now ) >>
+
+  my @stale_files = $flowjs->staleUploads(3600);
+
+In scalar context, returns the number of stale uploads. In list context,
+returns the list of filenames that belong to the stale uploads.
+
+An upload is considered stale if no part of it has been written to since
+C<$timeout> seconds ago.
+
+The optional C<$timeout> parameter is the minimum age of an incomplete upload
+before it is considered stale.
+
+The optional C<$now> parameter is the point of reference for C<$timeout>.
+It defaults to C<time>.
+
+=cut
+
+sub staleUploads( $self, $timeout = 3600, $now = time() ) {
+    my $cutoff = $now - $timeout;
+    my %mtime;
+    my @files = reverse sort $self->pendingUploads();
+    grep {
+        (my $upload = $_) =~ s!\.part\d+$!!;
+        if( ! exists $mtime{ $upload } or $mtime{ upload } < $cutoff ) {
+            my @stat = stat( $_ );
+            $mtime{ $upload } = $stat[9]
+                if $stat[9] > $cutoff;
+        };
+    } 
+    wantarray ? @files : scalar keys %mtime;
 }
 
 1;
