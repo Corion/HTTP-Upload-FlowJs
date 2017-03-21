@@ -14,6 +14,26 @@ use File::Basename 'dirname';
 
   plackup -a plack-server.psgi
 
+=head1 CHECKLIST
+
+Before putting this on a public server, consider the following:
+
+=over 4
+
+=item *
+
+Run the server under a very restricted user
+
+=item *
+
+Set hard ulimits on the number of inodes and file system quota
+
+=item *
+
+Have a cleanup cron job that removes stale uploads
+
+=back
+  
 =cut
 
 # This is used to keep the query parameters all in one place
@@ -100,11 +120,13 @@ sub POST_upload {
         return [500,[],["Invalid request"]];
     };
   
-    if( $flowjs->disallowedContentType( \%info, $session_id )) {
+    if( my $disallowed = $flowjs->disallowedContentType( \%info, $session_id )) {
         # We can determine the content type, and it's not an image
-        return [415,[],["File type disallowed"]];
+        return [415,[],["File type $disallowed disallowed"]];
     };
-  
+    my( $content_type, $image_ext ) = $flowjs->sniffContentType( \%info );
+    warn "Uploaded $content_type ($image_ext)";
+
     my $chunkname = $flowjs->chunkName( \%info, undef );
   
     # Save or copy the uploaded file
