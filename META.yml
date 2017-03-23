@@ -17,6 +17,10 @@ no_index:
   directory:
     - t
     - inc
+provides:
+  HTTP::Upload::FlowJs:
+    file: lib/HTTP/Upload/FlowJs.pm
+    version: '0.01'
 requires:
   Carp: '0'
   Data::Dumper: '0'

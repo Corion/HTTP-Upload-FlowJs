@@ -10,6 +10,9 @@ $eumm_version =~ s/_//;
 my $module = 'HTTP::Upload::FlowJs';
 (my $main_file = "lib/$module.pm" ) =~ s!::!/!g;
 (my $distname = $module) =~ s!::!-!g;
+my $content = do { local(*ARGV,$/)=[$main_file]; <> };
+(my $main_version)
+    = $content =~ m/ [^\n]* \$VERSION \s* = [^=] '([\d_.]+) [^\n]+ /gxms;
 
 my @tests = map { glob $_ } 't/*.t', 't/*/*.t';
 
@@ -32,6 +35,12 @@ my %module = (
         },
         dynamic_config   => 0, # we promise to keep META.* up-to-date
         x_static_install => 1, # we are pure Perl and don't do anything fancy
+        provides => {
+            $module => {
+                file    => $main_file,
+                version => $main_version,
+            }
+        }
     },
     LICENSE             => 'perl',
     PL_FILES            => {},

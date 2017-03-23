@@ -43,6 +43,12 @@
          }
       }
    },
+   "provides" : {
+      "HTTP::Upload::FlowJs" : {
+         "file" : "lib/HTTP/Upload/FlowJs.pm",
+         "version" : "0.01"
+      }
+   },
    "release_status" : "stable",
    "resources" : {
       "license" : [
