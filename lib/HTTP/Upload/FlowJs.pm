@@ -48,7 +48,7 @@ plugins for L<Dancer> and L<Mojolicious> planned.
     my $params = params();
 
     my %info;
-    @info{ @parameter_names} } = @{$params}{@parameter_names};
+    @info{ @parameter_names } = @{$params}{@parameter_names};
     $info{ localChunkSize } = -s $params{ file };
     # or however you get the size of the uploaded chunk
 
@@ -107,7 +107,7 @@ plugins for L<Dancer> and L<Mojolicious> planned.
   sub GET_upload {
     my $params = params();
     my %info;
-    @info{ @parameter_names} } = @{$params}{@parameter_names};
+    @info{ @parameter_names} = @{$params}{@parameter_names};
     my $flowjs = HTTP::Upload::FlowJs->new(
         incomingDirectory => $uploads,
         allowedContentType => sub { $_[0] =~ m!^image/! },

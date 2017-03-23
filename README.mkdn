@@ -33,7 +33,7 @@ plugins for [Dancer](https://metacpan.org/pod/Dancer) and [Mojolicious](https://
       my $params = params();
 
       my %info;
-      @info{ @parameter_names} } = @{$params}{@parameter_names};
+      @info{ @parameter_names } = @{$params}{@parameter_names};
       $info{ localChunkSize } = -s $params{ file };
       # or however you get the size of the uploaded chunk
 
@@ -92,7 +92,7 @@ plugins for [Dancer](https://metacpan.org/pod/Dancer) and [Mojolicious](https://
     sub GET_upload {
       my $params = params();
       my %info;
-      @info{ @parameter_names} } = @{$params}{@parameter_names};
+      @info{ @parameter_names} = @{$params}{@parameter_names};
       my $flowjs = HTTP::Upload::FlowJs->new(
           incomingDirectory => $uploads,
           allowedContentType => sub { $_[0] =~ m!^image/! },
@@ -270,7 +270,7 @@ this MIME type. Unrecognized files will be blocked.
 
 ## `$flowjs->sniffContentType( $info, $session )`
 
-    my( $content_type, $image_ext ) = $flowjs->sniffContentType;
+    my( $content_type, $image_ext ) = $flowjs->sniffContentType( $info, $session );
     if( !defined $content_type ) {
         # we need more chunks uploaded to check the content type
 
@@ -314,6 +314,31 @@ check the upload type.
         print "Received upload failed, removing target file\n";
         unlink 'user_upload.jpg';
     };
+
+## `$flowjs->pendingUploads`
+
+    my $uploading = $flowjs->pendingUploads();
+
+In scalar context, returns the number of pending uploads. In list context,
+returns the list of filenames that belong to the pending uploads. This list
+can be larger than the number of pending uploads, as one upload can have more
+than one chunk.
+
+## `$flowjs->staleUploads( $timeout, $now )`
+
+    my @stale_files = $flowjs->staleUploads(3600);
+
+In scalar context, returns the number of stale uploads. In list context,
+returns the list of filenames that belong to the stale uploads.
+
+An upload is considered stale if no part of it has been written to since
+`$timeout` seconds ago.
+
+The optional `$timeout` parameter is the minimum age of an incomplete upload
+before it is considered stale.
+
+The optional `$now` parameter is the point of reference for `$timeout`.
+It defaults to `time`.
 
 # REPOSITORY
 
