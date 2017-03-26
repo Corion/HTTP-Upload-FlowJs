@@ -701,8 +701,9 @@ sub pendingUploads( $self ) {
     my %uploads;
 
     my $incoming = $self->incomingDirectory;
-    open my $dir, $incoming
-        or croak "Couldn't read incoming directory '%s': %s", $self->incomingDirectory, $!;
+    opendir my $dir, $incoming
+        or croak sprintf "Couldn't read incoming directory '%s': %s",
+            $self->incomingDirectory, $!;
     @files = sort 
     map {
             (my $upload = $_) =~ s!\.part\d+$!!;
