@@ -638,7 +638,6 @@ sub sniffContentType( $self, $info, $sessionPrefix=undef ) {
         };
 
     } else {
-        warn "Chunk 1 not found (yet)?!";
         # Chunk 1 not uploaded/complete yet
     }
     return $content_type, $image_ext;
@@ -747,7 +746,7 @@ sub staleUploads( $self, $timeout = 3600, $now = time() ) {
             $mtime{ $upload } = $stat[9]
                 if $stat[9] > $cutoff;
         };
-    } 
+    } @files;
     wantarray ? @files : scalar keys %mtime;
 }
 
