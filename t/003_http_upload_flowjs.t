@@ -1,7 +1,7 @@
 #!perl -w
 use strict;
 use warnings;
-use Test::More tests => 58;
+use Test::More tests => 75;
 use Data::Dumper;
 
 use HTTP::Upload::FlowJs;
@@ -22,6 +22,8 @@ my $flowjs = HTTP::Upload::FlowJs->new(
 );
 
 is $flowjs->pendingUploads, 0, "At start we have no pending uploads";
+is_deeply [$flowjs->pendingUploads], [], "At start we have no pending uploads (list)";
+is $flowjs->staleUploads, 0, "At start we have no stale uploads";
 
 # Check that we can ask for the presence of a file
 my( $status, @errors ) = $flowjs->chunkOK(
@@ -135,6 +137,8 @@ close $fh;
 is_deeply \@errors, [], "The request is not obviously invalid";
 ok $flowjs->uploadComplete(\%info), "The upload is considered complete";
 is $flowjs->pendingUploads, 1, "We have one pending upload (even if it's complete)";
+is_deeply [$flowjs->pendingUploads], [$tempname], "We have one pending upload (even if it's complete)";
+
 
 my $payload = join '',
               "\x89",
@@ -183,6 +187,7 @@ diag "Uploading sequence: @parts";
     localChunkSize => undef,
 );
 
+my @uploaded_parts = ($tempname); # from above
 for my $chunk (@parts) {
     %info = (
         flowChunkSize => chunkSize,
@@ -210,6 +215,7 @@ for my $chunk (@parts) {
     binmode $fh;
     print $fh part($chunk);
     close $fh;
+    push @uploaded_parts, $tempname;
     
     my( $content_type, $ext ) = $flowjs->sniffContentType(\%info);
     if( exists $seen{1}) {
@@ -221,6 +227,8 @@ for my $chunk (@parts) {
     };
 
     is $flowjs->pendingUploads, 2, "We have twp pending uploads";
+    is_deeply [sort $flowjs->pendingUploads], [ sort @uploaded_parts ],
+        "We get the list of uploaded partial files";
 
     if( $chunk != $parts[-1]) {
         ok !$flowjs->uploadComplete( \%info ), "An incomplete upload is not complete";
@@ -247,6 +255,7 @@ if( $flowjs->uploadComplete( \%info, undef )) {
     
     ok $result eq $payload, "We can read the identical file from the parts again";
     is $flowjs->pendingUploads, 1, "After combining the chunks, the upload count decreases";
+    is_deeply [$flowjs->pendingUploads], [$tempname], "Only one file remains";
 
 } else {
     fail "The upload is considered complete";
@@ -267,6 +276,8 @@ if( $flowjs->uploadComplete( \%info, undef )) {
 %seen = ();
 unshift @parts, pop @parts; # favour first and last chunks
 
+is_deeply [$flowjs->pendingUploads], [$tempname], "Only one file remains";
+my %uploaded_parts = ($tempname => 1);
 for my $chunk (@parts, 2..parts) {
     %info = (
         flowChunkSize => chunkSize,
@@ -292,6 +303,7 @@ for my $chunk (@parts, 2..parts) {
     binmode $fh;
     print $fh part($chunk);
     close $fh;
+    $uploaded_parts{ $tempname } = 1;
 
     my $res = $flowjs->disallowedContentType(\%info);
     if( exists $seen{1}) {
@@ -302,6 +314,12 @@ for my $chunk (@parts, 2..parts) {
 
     is $flowjs->pendingUploads, 2,
         "Even invalid uploads get counted";
+    is_deeply [$flowjs->pendingUploads], [ sort keys %uploaded_parts ],
+        "Invalid upload parts also get listed"
+        or diag Dumper { got => [$flowjs->pendingUploads], expected => [ sort keys %uploaded_parts ] };
 };
+
+# Hopefully the test suite runs below 3600 seconds
+is $flowjs->staleUploads, 0, "At end we have no stale uploads";
 
 done_testing;
