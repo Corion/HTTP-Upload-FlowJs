@@ -154,6 +154,14 @@ METHODS
 
       maxChunkSize - hard maximum chunk size for a single chunk
 
+      minChunkSize - hard minimum chunk size for a single chunk
+
+      Default 1024
+
+      The minimum chunk size is required since the file type detection
+      works on the first chunk. If the first chunk is too small, its file
+      type cannot be checked.
+
       simultaneousUploads - simultaneously allowed uploads per file
 
       This is just an indication to the Javascript flow.js client if you
@@ -340,6 +348,19 @@ METHODS
 
     The optional $now parameter is the point of reference for $timeout. It
     defaults to time.
+
+ $flowjs->purgeStaleOrInvalid( $timeout, $now )
+
+        my @errors = $flowjs->purgeStaleOrInvalid();
+
+    Routine to delete all stale uploads and uploads with an invalid file
+    type.
+
+    This is mostly a helper routine to run from a cron job.
+
+    Note that if you allow uploads of multiple flowJs instances into the
+    same directory, they need to all have the same allowed file types or
+    this method will delete files from another instance.
 
 REPOSITORY
 
