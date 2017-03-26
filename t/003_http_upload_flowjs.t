@@ -1,7 +1,7 @@
 #!perl -w
 use strict;
 use warnings;
-use Test::More tests => 75;
+use Test::More tests => 86;
 use Data::Dumper;
 
 use HTTP::Upload::FlowJs;
@@ -321,5 +321,33 @@ for my $chunk (@parts, 2..parts) {
 
 # Hopefully the test suite runs below 3600 seconds
 is $flowjs->staleUploads, 0, "At end we have no stale uploads";
+is_deeply [ sort $flowjs->staleUploads], [], "At end we have no stale uploads"
+    or diag Dumper [ sort $flowjs->staleUploads];
+
+# Now try aging some uploads:
+utime 0,0, $tempname;
+is $flowjs->staleUploads, 1, "We created a stale (single-file) upload";
+is_deeply [$flowjs->staleUploads], [$tempname], "We created a stale (single-file) upload";
+
+# We can make up to three parts of the other upload old before it gets
+# considered stale:
+my $items;
+delete $uploaded_parts{ $tempname };
+for my $partname (sort keys %uploaded_parts) {
+    utime 0,0, $partname;
+    if( $items++ < 3 ) {
+        is $flowjs->staleUploads, 1, "We still only have one stale upload (part $items)";
+        is_deeply [$flowjs->staleUploads], [$tempname], "We still only have one stale file";
+    } else {
+        is $flowjs->staleUploads, 2, "After all parts are stale, an upload is stale";
+        is_deeply [sort $flowjs->staleUploads], [sort $tempname, keys %uploaded_parts], "We now have more stale files"
+            or diag Dumper {
+                got => [$flowjs->staleUploads],
+                expected => [sort $tempname, keys %uploaded_parts],
+            };
+    };
+};
+
+
 
 done_testing;

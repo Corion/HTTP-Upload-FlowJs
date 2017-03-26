@@ -703,17 +703,17 @@ sub pendingUploads( $self ) {
     opendir my $dir, $incoming
         or croak sprintf "Couldn't read incoming directory '%s': %s",
             $self->incomingDirectory, $!;
-    @files = sort 
+    @files = sort
     map {
             (my $upload = $_) =~ s!\.part\d+$!!;
             $uploads{ $upload }++;
             $_
-        } 
+        }
     grep { -f }
     map {
         "$incoming/$_"
     } readdir $dir;
-    
+
     wantarray ? @files : scalar keys %uploads;
 }
 
@@ -739,15 +739,29 @@ sub staleUploads( $self, $timeout = 3600, $now = time() ) {
     my $cutoff = $now - $timeout;
     my %mtime;
     my @files = reverse sort $self->pendingUploads();
-    grep {
+    for ( @files ) {
         (my $upload = $_) =~ s!\.part\d+$!!;
-        if( ! exists $mtime{ $upload } or $mtime{ upload } < $cutoff ) {
+        if( ! exists $mtime{ $upload } or $mtime{ $upload } < $cutoff ) {
             my @stat = stat( $_ );
+            # We want to remember the newest instance for this upload
+            $mtime{ $upload } ||= 0;
             $mtime{ $upload } = $stat[9]
-                if $stat[9] > $cutoff;
+                if $stat[9] > $mtime{ $upload };
+            #warn "$upload: $mtime{ $upload } ($stat[9])";
+        } else {
+            #warn "$upload has already younger known participant, is not stale";
+        };
+    };
+
+    my %stale;
+    @files = grep {
+        (my $upload = $_) =~ s!\.part\d+$!!;
+        if( exists $mtime{ $upload } and $mtime{ $upload } < $cutoff ) {
+            $stale{ $upload } = 1;
         };
     } @files;
-    wantarray ? @files : scalar keys %mtime;
+
+    wantarray ? @files : scalar keys %stale;
 }
 
 1;
