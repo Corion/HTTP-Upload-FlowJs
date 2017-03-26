@@ -1,7 +1,7 @@
 #!perl -w
 use strict;
 use warnings;
-use Test::More tests => 44;
+use Test::More tests => 58;
 use Data::Dumper;
 
 use HTTP::Upload::FlowJs;
@@ -20,6 +20,8 @@ END {
 my $flowjs = HTTP::Upload::FlowJs->new(
     incomingDirectory => $tempdir,
 );
+
+is $flowjs->pendingUploads, 0, "At start we have no pending uploads";
 
 # Check that we can ask for the presence of a file
 my( $status, @errors ) = $flowjs->chunkOK(
@@ -132,6 +134,7 @@ print $fh $_ for <$testfile>;
 close $fh;
 is_deeply \@errors, [], "The request is not obviously invalid";
 ok $flowjs->uploadComplete(\%info), "The upload is considered complete";
+is $flowjs->pendingUploads, 1, "We have one pending upload (even if it's complete)";
 
 my $payload = join '',
               "\x89",
@@ -217,6 +220,8 @@ for my $chunk (@parts) {
         is $ext, undef, "Until we see the first chunk, we don't know the extension";
     };
 
+    is $flowjs->pendingUploads, 2, "We have twp pending uploads";
+
     if( $chunk != $parts[-1]) {
         ok !$flowjs->uploadComplete( \%info ), "An incomplete upload is not complete";
     } else {
@@ -241,11 +246,12 @@ if( $flowjs->uploadComplete( \%info, undef )) {
     close $fh;
     
     ok $result eq $payload, "We can read the identical file from the parts again";
+    is $flowjs->pendingUploads, 1, "After combining the chunks, the upload count decreases";
 
 } else {
     fail "The upload is considered complete";
     SKIP: {
-        skip 1, "Upload was not completed, no sense in checking the files";
+        skip 2, "Upload was not completed, no sense in checking the files";
     }
 }
 
@@ -293,6 +299,9 @@ for my $chunk (@parts, 2..parts) {
     } else {
         is $res, undef, "Until we see the first chunk, we don't know if the file is disallowed";
     };
+
+    is $flowjs->pendingUploads, 2,
+        "Even invalid uploads get counted";
 };
 
 done_testing;
