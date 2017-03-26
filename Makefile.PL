@@ -8,6 +8,8 @@ my $eumm_version = $ExtUtils::MakeMaker::VERSION;
 $eumm_version =~ s/_//;
 
 my $module = 'HTTP::Upload::FlowJs';
+
+# Find out some data about our module
 (my $main_file = "lib/$module.pm" ) =~ s!::!/!g;
 (my $distname = $module) =~ s!::!-!g;
 my $content = do { local(*ARGV,$/)=[$main_file]; <> };

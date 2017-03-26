@@ -12,14 +12,15 @@ release date is mentioned as well
 
 =cut
 
+use lib '.';
 use vars '%module';
 require 'Makefile.PL';
 # Loaded from Makefile.PL
 %module = get_module_info();
 my $module = $module{NAME};
 
-(my $file = $module) =~ s!::!/!g;
-require "$file.pm";
+my $file = $module{ VERSION_FROM };
+require $file;
 
 my $version = sprintf '%0.2f', $module->VERSION;
 
