@@ -764,6 +764,36 @@ sub staleUploads( $self, $timeout = 3600, $now = time() ) {
     wantarray ? @files : scalar keys %stale;
 }
 
+=head2 C<< $flowjs->purgeStaleOrInvalid( $timeout, $now ) >>
+
+    my @errors = $flowjs->purgeStaleOrInvalid();
+
+Routine to delete all stale uploads and uploads with an invalid
+file type.
+
+This is mostly a helper routine to run from a cron job.
+
+Note that if you allow uploads of multiple flowJs instances into the same
+directory, they need to all have the same allowed file types or this method
+will delete files from another instance.
+
+=cut
+
+sub purgeStaleOrInvalid($self, $timeout = 3600, $now = time() ) {
+    # First, kill off all stale files
+    my @errors;
+    for my $f ($self->staleUploads( $timeout, $now )) {
+        unlink $f or push @errors, [$f => "$!"];
+    };
+
+    for my $f ($self->pendingUploads()) {
+        # Hmm - here we need to synthesize session info from a filename
+        # not really easy, isn't it?!
+    };
+
+    @errors
+};
+
 1;
 
 =head1 REPOSITORY
