@@ -170,6 +170,14 @@ B<maxFileSize> - hard maximum total file size for a single upload
 
 B<maxChunkSize> - hard maximum chunk size for a single chunk
 
+B<minChunkSize> - hard minimum chunk size for a single chunk
+
+Default 1024
+
+The minimum chunk size is required since the file type detection
+works on the first chunk. If the first chunk is too small, its file type
+cannot be checked.
+
 B<simultaneousUploads> - simultaneously allowed uploads per file
 
 This is just an indication to the Javascript C<flow.js> client
@@ -199,6 +207,7 @@ sub new( $class, %options ) {
     $options{ maxChunkCount } ||= 1000;
     $options{ maxFileSize } ||= 10_000_000;
     $options{ maxChunkSize } ||= 1024*1024;
+    $options{ minChunkSize } ||= 1024;
     $options{ simultaneousUploads } ||= 3;
     $options{ maxPendingUploads } ||= 1000;
     $options{ mime } ||= MIME::Detect->new();
@@ -354,6 +363,14 @@ sub validateRequest( $self, $method, $info, $sessionId=undef ) {
                             $info->{flowFilename},
                             $info->{flowChunkSize},
                             $self->{maxChunkSize},
+                            ;
+
+    } elsif( exists $info->{ flowChunkSize } and $info->{ flowChunkSize } < $self->{minChunkSize} ) {
+        push @invalid, sprintf 'Uploaded chunk [%d] of file [%s] is too small [%d], allowed is [%d]',
+                            $info->{flowChunkNumber},
+                            $info->{flowFilename},
+                            $info->{flowChunkSize},
+                            $self->{minChunkSize},
                             ;
 
     } elsif( ($info->{ flowTotalSize } || 0) > $self->{ maxFileSize } ) {
