@@ -1,4 +1,4 @@
-package HTTP::Upload::FlowJs::Util;
+package HTTP::Upload::FlowJs::Utils;
 
 use strict;
 use warnings;
@@ -9,55 +9,35 @@ require Exporter;
 @ISA = qw(Exporter);
 @EXPORT_OK = qw(clean_fragment mime_detect);
 
-use feature "fc";
+use feature qw(fc);
 use Unicode::Normalize;
 
-#
-# mime detect
-#
-
-my $mime_detect_fallback;
-sub mime_detect {
-    if ( not defined $mime_detect_fallback ) {
-        eval {
-            require MIME::Detect;
-            $mime_detect_fallback = 0;
-            1;
-        } or do {
-            $mime_detect_fallback = 1;
+BEGIN {
+    # clean_fragment
+    {
+        eval { require Text::CleanFragment };
+        my $subname = __PACKAGE__ . '::clean_fragment';
+        no strict 'refs';
+        if ( $@ ) {
+            *{$subname} = \&clean_fragment_fallback;
+        }
+        else {
+            *{$subname} = \&Text::CleanFragment::clean_fragment;
         }
     }
 
-    if ( $mime_detect_fallback ) {
-        return undef
-    }
-    elsif ( defined $mime_detect_fallback ) {
-        return MIME::Detect->new(@_);
-    }
-}
 
-
-#
-# clean_fragment
-#
-
-my $clean_fragment_fallback;
-sub clean_fragment {
-    if ( not defined $clean_fragment_fallback ) {
-        eval {
-            require Text::CleanFragment;
-            $clean_fragment_fallback = 0;
-            1;
-        } or do {
-            $clean_fragment_fallback = 1;
+    # mime_detect
+    {
+        eval { require MIME::Detect };
+        my $subname = __PACKAGE__ . '::mime_detect';
+        no strict 'refs';
+        if ( $@ ) {
+            *{$subname} = sub { undef };
         }
-    }
-
-    if ( $clean_fragment_fallback ) {
-        return clean_fragment_fallback(@_);
-    }
-    elsif ( defined $clean_fragment_fallback ) {
-        return Text::CleanFragment::clean_fragment(@_);
+        else {
+            *{$subname} = sub { MIME::Detect->new(@_) };
+        }
     }
 }
 
