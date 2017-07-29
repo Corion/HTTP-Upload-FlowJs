@@ -224,8 +224,8 @@ for my $chunk (@parts) {
             is $ext, 'png', "Once we see the first chunk, we find the correct extension";
         }
         else {
-            is $content_type, '', "Unknown content type or no MIME::Detect installed";
-            is $ext, '', "Unknown extension or no MIME::Detect installed";
+            is $content_type, undef, "Unknown content type or no MIME::Detect installed";
+            is $ext, undef, "Unknown extension or no MIME::Detect installed";
         }
     } else {
         is $content_type, undef, "Until we see the first chunk, we don't know the content type";
@@ -318,7 +318,7 @@ for my $chunk (@parts, 2..parts) {
             is $res, 'image/png', "Once we see the first chunk, we find the file is disallowed";
         }
         else {
-            is $res, '1', "Unknown content type or no MIME::Detect installed";
+            is $res, undef, "Unknown content type or no MIME::Detect installed";
         }
     } else {
         is $res, undef, "Until we see the first chunk, we don't know if the file is disallowed";
