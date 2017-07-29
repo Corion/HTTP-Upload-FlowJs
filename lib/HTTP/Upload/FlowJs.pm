@@ -679,20 +679,25 @@ sub sniffContentType {
     my( $content_type, $image_ext );
 
     my( $status, @messages ) = $self->chunkOK( $info, $sessionPrefix, 1 );
-    if( 200 == $status ) {
-        my $fh = $self->chunkFh( $info, $sessionPrefix, 1 );
-        my $t = $self->mime->mime_type($fh) if $self->mime;
-        if( $t ) {
-            $content_type = $t->mime_type;
-            $image_ext    = $t->extension;
-        } else {
-            $content_type = '';
-            $image_ext    = '';
-        };
 
-    } else {
-        # Chunk 1 not uploaded/complete yet
+    if ( $self->mime ) {
+        if( 200 == $status ) {
+
+            my $fh = $self->chunkFh( $info, $sessionPrefix, 1 );
+            my $t = $self->mime->mime_type($fh);
+            if( $t ) {
+                $content_type = $t->mime_type;
+                $image_ext    = $t->extension;
+            } else {
+                $content_type = '';
+                $image_ext    = '';
+            };
+
+        } else {
+            # Chunk 1 not uploaded/complete yet
+        }
     }
+
     return $content_type, $image_ext;
 };
 
