@@ -406,14 +406,6 @@ sub validateRequest {
                             $self->expectedChunkSize( $info ),
                             ;
 
-    } elsif( ($info->{ flowChunkSize } || 0 ) < $self->expectedChunkSize( $info )) {
-        # Uploaded chunk is a middle or end chunk but is too large
-        push @invalid, sprintf 'Uploaded chunk [%s] is too small ([%d]) expect [%d]',
-                            $info->{flowChunkNumber},
-                            $info->{flowChunkSize},
-                            $self->expectedChunkSize( $info ),
-                            ;
-
     } else {
         # Everything is OK with the chunk size and file size, I guess.
 
