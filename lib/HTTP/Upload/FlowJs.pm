@@ -175,6 +175,16 @@ The minimum chunk size is required since the file type detection
 works on the first chunk. If the first chunk is too small, its file type
 cannot be checked.
 
+B<forceChunkSize> - force all chunks to be less or equal than C<maxChunkSize>
+
+Default: true
+
+Otherwise, the last chunk will be greater than or equal to C<maxChunkSize>
+(the last uploaded chunk will be at least this size and up to two the size).
+
+Note: when C<forceChunkSize> is C<false> it only make C<chunkSize> value in
+L</jsConfig> equal to C<maxChunkSize / 2>.
+
 B<simultaneousUploads> - simultaneously allowed uploads per file
 
 This is just an indication to the Javascript C<flow.js> client
@@ -206,8 +216,8 @@ sub new {
     $options{ maxFileSize } ||= 10_000_000;
     $options{ maxChunkSize } ||= 1024*1024;
     $options{ minChunkSize } ||= 1024;
+    $options{ forceChunkSize } ||= 1;
     $options{ simultaneousUploads } ||= 3;
-    $options{ maxPendingUploads } ||= 1000;
     $options{ mime } ||= mime_detect();
     $options{ allowedContentType } ||= sub { 1 };
 
@@ -228,7 +238,13 @@ sub mime {
 
 =head2 C<< $flowjs->jsConfig >>
 
+  # Perl HASH
   my $config = $flowjs->jsConfig(
+      target => '/upload',
+  );
+
+  # JSON string
+  my $config = $flowjs->jsConfigStr(
       target => '/upload',
   );
 
@@ -240,12 +256,17 @@ object for inclusion with the JS side of the world
 sub jsConfig {
     my ( $self, %override ) = @_;
 
+    # The last uploaded chunk will be at least this size and up to two the size
+    # when forceChunkSize is false
+    my $chunkSize = $self->{maxChunkSize};
+    $chunkSize = $chunkSize / 2 unless $self->{forceChunkSize};
+
     {
         map { $_ => $self->{$_} } (qw(
-            chunkSize
             simultaneousUploads
+            forceChunkSize
         )),
-        forceChunkSize => 1,
+        chunkSize => $chunkSize,
         testChunks => 1,
         withCredentials => 1,
         uploadMethod => 'POST',
@@ -403,6 +424,14 @@ sub validateRequest {
         push @invalid, sprintf 'Uploaded chunk [%s] is too small ([%d]) expect [%d]',
                             $info->{flowChunkNumber},
                             $info->{localChunkSize},
+                            $self->expectedChunkSize( $info ),
+                            ;
+
+    } elsif( ($info->{ flowChunkSize } || 0 ) < $self->expectedChunkSize( $info )) {
+        # Uploaded chunk is a middle or end chunk but is too large
+        push @invalid, sprintf 'Uploaded chunk [%s] is too small ([%d]) expect [%d]',
+                            $info->{flowChunkNumber},
+                            $info->{flowChunkSize},
                             $self->expectedChunkSize( $info ),
                             ;
 
