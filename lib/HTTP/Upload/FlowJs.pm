@@ -8,6 +8,7 @@ use Data::Dumper;
 use vars '$VERSION';
 $VERSION = '0.01';
 
+use feature qw(state);
 use JSON qw(encode_json decode_json);
 
 =head1 NAME
@@ -371,7 +372,7 @@ sub validateRequest {
         if( exists $info->{ $param } and ! $info->{ $param } =~ /^[0-9]+$/) {
             push @invalid, sprintf 'Parameter [%s] should be numeric, but is [%s]; set to 0',
                                 $param,
-                                Dumper $info->{$param}
+                                $info->{$param}
                                 ;
             $info->{ $param } = 0;
         };
@@ -403,7 +404,7 @@ sub validateRequest {
         if( exists $info->{ $param } and $info->{ $param } =~ m![/\\]! ) {
             push @invalid, sprintf 'Parameter [%s] contains invalid path segments',
                                 $param,
-                                Dumper $info->{$param}
+                                $info->{$param}
                                 ;
         };
     };
@@ -414,7 +415,7 @@ sub validateRequest {
         if( exists $info->{ $param } and $info->{ $param } =~ m![/\\]\.\.[/\\]! ) {
             push @invalid, sprintf 'Parameter [%s] contains invalid upward path segments [%s]',
                                 $param,
-                                Dumper $info->{$param}
+                                $info->{$param}
                                 ;
         };
     };
@@ -424,7 +425,7 @@ sub validateRequest {
         if( exists $info->{ $param } and $info->{ $param } =~ m![\x00-\x1f]! ) {
             push @invalid, sprintf 'Parameter [%s] contains control characters [%s]',
                                 $param,
-                                Dumper $info->{$param}
+                                $info->{$param}
                                 ;
         };
     };
