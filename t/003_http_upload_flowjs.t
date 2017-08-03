@@ -34,11 +34,14 @@ my( $status, @errors ) = $flowjs->chunkOK(
         flowIdentifier => '2226376-IMG_7363JPG',
         flowRelativePath => 'IMG_7363.JPG',
         flowTotalChunks => 3,
-        flowTotalSize => 2226376
+        flowTotalSize => 2226376,
+        flowCurrentChunkSize => 129224,
     }
 );
 is $status, 416, "A non-existing directory+file is no error";
 is_deeply \@errors, [], "The request is not obviously invalid";
+
+
 
 # Check that different sessions get different names
    $flowjs = HTTP::Upload::FlowJs->new(
@@ -63,6 +66,8 @@ isn't $chunkName{1}, $chunkName{2}, "Different sessions get different filenames"
    $flowjs = HTTP::Upload::FlowJs->new(
     incomingDirectory => $tempdir,
 );
+
+
 # Now try to "upload" a chunk much larger than what is allowed:
 # Check that we can ask for the presence of a file
 my %info = (
@@ -74,6 +79,7 @@ my %info = (
         flowTotalChunks => 1,
         flowTotalSize => -s $0,
         localChunkSize => 10_000_000,
+        flowCurrentChunkSize => 1048576,
         file => $0,
 );
 @errors = $flowjs->validateRequest(
@@ -81,7 +87,7 @@ my %info = (
     \%info,
 );
 is_deeply [ sort @errors ], [
-    'Uploaded chunk [1] of [IMG_7363.JPG] is larger than it should be ([10000000], expect [1048576])',
+    'Uploaded chunk [1] of file [IMG_7363.JPG] is larger than it should be ([10000000], allowed is [1048576])',
 ], "We reject a chunk that is larger than the proposed size"
     or do { diag $_ for @errors };
 
@@ -95,6 +101,7 @@ is_deeply [ sort @errors ], [
         flowTotalChunks => 1100,
         flowTotalSize => -s $0,
         localChunkSize => 1,
+        flowCurrentChunkSize => 1048576,
         file => $0,
 );
 @errors = $flowjs->validateRequest(
@@ -120,6 +127,7 @@ binmode $testfile;
         flowTotalChunks => 1,
         flowTotalSize => -s $0,
         localChunkSize => -s $0,
+        flowCurrentChunkSize => -s $0,
         file => $0,
 );
 @errors = $flowjs->validateRequest(
@@ -185,6 +193,7 @@ diag "Uploading sequence: @parts";
     flowIdentifier => 'test.png',
     file => undef,
     localChunkSize => undef,
+    flowCurrentChunkSize => undef,
 );
 
 my @uploaded_parts = ($tempname); # from above
@@ -198,6 +207,7 @@ for my $chunk (@parts) {
         flowIdentifier => 'test.png',
         file => part_fh($chunk),
         localChunkSize => length part($chunk),
+        flowCurrentChunkSize => length part($chunk),
     );
     $seen{ $chunk } = $info{ localChunkSize };
     @errors = $flowjs->validateRequest(
@@ -294,6 +304,7 @@ for my $chunk (@parts, 2..parts) {
         flowIdentifier => 'test.png',
         file => part_fh($chunk),
         localChunkSize => length part($chunk),
+        flowCurrentChunkSize => length part($chunk),
     );
     $seen{ $chunk } = $info{ localChunkSize };
     @errors = $flowjs->validateRequest(

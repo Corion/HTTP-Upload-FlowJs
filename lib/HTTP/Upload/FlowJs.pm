@@ -23,22 +23,23 @@ plugins for L<Dancer> and L<Mojolicious> planned.
   use HTTP::Upload::FlowJs;
 
   my @parameter_names = (
-    'file', # The name of the file
-    'flowChunkNumber', # The index of the chunk in the current upload.
-                       # First chunk is 1 (no base-0 counting here).
-    'flowTotalChunks', # The total number of chunks.
-    'flowChunkSize', # The general chunk size. Using this value and
-                     # flowTotalSize you can calculate the total number of
-                     # chunks. Please note that the size of the data received in
-                     # the HTTP might be lower than flowChunkSize of this for
-                     # the last chunk for a file.
-    'flowTotalSize', #  The total file size.
-    'flowIdentifier', # A unique identifier for the file contained in the request.
-    'flowFilename', # The original file name (since a bug in Firefox results in
-                    # the file name not being transmitted in chunk
-                    # multipart posts).
-    'flowRelativePath', # The file's relative path when selecting a directory
-                        # (defaults to file name in all browsers except Chrome).
+    'file',                 # The name of the file
+    'flowChunkNumber',      # The index of the chunk in the current upload.
+                            # First chunk is 1 (no base-0 counting here).
+    'flowTotalChunks',      # The total number of chunks.
+    'flowCurrentChunkSize', # Current chunk size
+    'flowChunkSize',        # The general chunk size. Using this value and
+                            # flowTotalSize you can calculate the total number of
+                            # chunks. Please note that the size of the data received in
+                            # the HTTP might be lower than flowChunkSize of this for
+                            # the last chunk for a file.
+    'flowTotalSize',        #  The total file size.
+    'flowIdentifier',       # A unique identifier for the file contained in the request.
+    'flowFilename',         # The original file name (since a bug in Firefox results in
+                            # the file name not being transmitted in chunk
+                            # multipart posts).
+    'flowRelativePath',     # The file's relative path when selecting a directory
+                            # (defaults to file name in all browsers except Chrome).
   );
 
   # In your POST handler for /upload:
@@ -307,13 +308,14 @@ sub params {
     my ( $self, $required_params ) = @_;
 
     state $params = {
-        flowChunkNumber  => 1,
-        flowTotalChunks  => 1,
-        flowChunkSize    => 1,
-        flowTotalSize    => 1,
-        flowIdentifier   => 1,
-        flowFilename     => 1,
-        flowRelativePath => 0,
+        flowChunkNumber      => 1,
+        flowTotalChunks      => 1,
+        flowChunkSize        => 1,
+        flowCurrentChunkSize => 1,
+        flowTotalSize        => 1,
+        flowIdentifier       => 1,
+        flowFilename         => 1,
+        flowRelativePath     => 0,
     };
 
     if ( $required_params ) {
@@ -368,7 +370,7 @@ sub validateRequest {
     };
 
     # Numbers should be numbers
-    for my $param (qw(flowChunkNumber flowTotalChunks flowChunkSize flowTotalSize)) {
+    for my $param (qw(flowChunkNumber flowTotalChunks flowChunkSize flowTotalSize flowCurrentChunkSize)) {
         if( exists $info->{ $param } and ! $info->{ $param } =~ /^[0-9]+$/) {
             push @invalid, sprintf 'Parameter [%s] should be numeric, but is [%s]; set to 0',
                                 $param,
@@ -430,52 +432,65 @@ sub validateRequest {
         };
     };
 
-    if( exists $info->{ flowChunkSize } and $info->{ flowChunkSize } > $self->{maxChunkSize} ) {
-        push @invalid, sprintf 'Uploaded chunk [%d] of file [%s] is too large [%d], allowed is [%d]',
-                            $info->{flowChunkNumber},
-                            $info->{flowFilename},
-                            $info->{flowChunkSize},
-                            $self->{maxChunkSize},
-                            ;
 
-    } elsif( exists $info->{ flowChunkSize } and $info->{ flowChunkSize } < $self->{minChunkSize} ) {
-        push @invalid, sprintf 'Uploaded chunk [%d] of file [%s] is too small [%d], allowed is [%d]',
-                            $info->{flowChunkNumber},
-                            $info->{flowFilename},
-                            $info->{flowChunkSize},
-                            $self->{minChunkSize},
-                            ;
 
-    } elsif( ($info->{ flowTotalSize } || 0) > $self->{ maxFileSize } ) {
+    my $min_max_error = 0;
+    for my $param (qw(flowChunkSize flowCurrentChunkSize)) {
+        if( exists $info->{ $param } and $info->{ $param } > $self->{ maxChunkSize } ) {
+            $min_max_error = 1;
+            push @invalid, sprintf 'Uploaded chunk [%d] of file [%s] is too large [%d], allowed is [%d]',
+                                $info->{flowChunkNumber},
+                                $info->{flowFilename},
+                                $info->{$param},
+                                $self->{maxChunkSize},
+                                ;
+
+        }
+    }
+
+    for my $param (qw(flowChunkSize flowCurrentChunkSize)) {
+        if( exists $info->{ $param } and $info->{ $param } < $self->{ minChunkSize } ) {
+            $min_max_error = 1;
+            push @invalid, sprintf 'Uploaded chunk [%d] of file [%s] is too small [%d], allowed is [%d]',
+                                $info->{flowChunkNumber},
+                                $info->{flowFilename},
+                                $info->{$param},
+                                $self->{minChunkSize},
+                                ;
+
+        }
+    }
+
+    if( ! $min_max_error and ($info->{ flowTotalSize } || 0) > $self->{ maxFileSize } ) {
         # Uploaded file would be too large
-        push @invalid, sprintf 'Uploaded file [%s] would be too large ([%d]) expect [%d]',
+        push @invalid, sprintf 'Uploaded file [%s] would be too large ([%d]) allowed is [%d]',
                             $info->{flowFilename},
                             $info->{flowTotalSize},
                             $self->{maxFileSize},
                             ;
 
-    } elsif( $method eq 'POST' and $info->{ localChunkSize } > $info->{flowChunkSize} ) {
+    } elsif( ! $min_max_error and $method eq 'POST' and $info->{ localChunkSize } > $info->{flowChunkSize} ) {
         # Uploaded chunk is larger than the maximum chunk upload size
-        push @invalid, sprintf 'Uploaded chunk [%d] of [%s] is larger than it should be ([%d], expect [%d])',
+        push @invalid, sprintf 'Uploaded chunk [%d] of file [%s] is larger than it should be ([%d], allowed is [%d])',
                             $info->{flowChunkNumber},
                             $info->{flowFilename},
                             $info->{localChunkSize},
                             $self->{maxChunkSize},
                             ;
 
-    } elsif( ($info->{ flowChunkSize } || 0 ) < $self->expectedChunkSize( $info )) {
+    } elsif( ! $min_max_error and ($info->{ flowCurrentChunkSize } || 0 ) < $self->expectedChunkSize( $info )) {
         # Uploaded chunk is a middle or end chunk but is too small
         push @invalid, sprintf 'Uploaded chunk [%s] is too small ([%d]) expect [%d]',
                             $info->{flowChunkNumber},
-                            $info->{localChunkSize},
+                            $info->{flowCurrentChunkSize},
                             $self->expectedChunkSize( $info ),
                             ;
 
-    } elsif( ($info->{ flowChunkSize } || 0 ) < $self->expectedChunkSize( $info )) {
+    } elsif( ! $min_max_error and ($info->{ flowCurrentChunkSize } || 0 ) > $self->expectedChunkSize( $info )) {
         # Uploaded chunk is a middle or end chunk but is too large
         push @invalid, sprintf 'Uploaded chunk [%s] is too small ([%d]) expect [%d]',
                             $info->{flowChunkNumber},
-                            $info->{flowChunkSize},
+                            $info->{flowCurrentChunkSize},
                             $self->expectedChunkSize( $info ),
                             ;
 

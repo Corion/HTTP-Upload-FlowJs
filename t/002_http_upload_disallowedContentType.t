@@ -33,6 +33,7 @@ my $flowjs = HTTP::Upload::FlowJs->new(
 my %info = (
         flowChunkNumber => 1,
         flowChunkSize => -s $0,
+        flowCurrentChunkSize => -s $0,
         flowFilename => 'IMG_7363.JPG',
         flowIdentifier => '2226376-IMG_7363JPG',
         flowRelativePath => 'IMG_7363.JPG',
