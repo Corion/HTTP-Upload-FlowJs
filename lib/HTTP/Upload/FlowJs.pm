@@ -164,11 +164,21 @@ or L<Dancer> for that.
 
 =over 4
 
+B<incomingDirectory> - path for the temporary upload parts
+
+Required
+
 B<maxChunkCount> - hard maximum chunks allowed for a single upload
+
+Default 1000
 
 B<maxFileSize> - hard maximum total file size for a single upload
 
+Default 10_000_000
+
 B<maxChunkSize> - hard maximum chunk size for a single chunk
+
+Default 1048576
 
 B<minChunkSize> - hard minimum chunk size for a single chunk
 
@@ -190,6 +200,8 @@ L</jsConfig> equal to C<maxChunkSize / 2>.
 
 B<simultaneousUploads> - simultaneously allowed uploads per file
 
+Default 3
+
 This is just an indication to the Javascript C<flow.js> client
 if you pass it the configuration from this object. This is not enforced
 in any way yet.
@@ -203,7 +215,7 @@ upload as complete with C<< $flowjs->uploadComplete >>.
 
 B<fileParameterName> - The name of the multipart POST parameter to use for the file chunk
 
-Default: file
+Default file
 
 =back
 
