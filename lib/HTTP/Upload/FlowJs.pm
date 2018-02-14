@@ -233,7 +233,7 @@ sub new {
     $options{ maxChunkCount } ||= 1000;
     $options{ maxFileSize } ||= 10_000_000;
     $options{ maxChunkSize } ||= 1024*1024;
-    $options{ minChunkSize } ||= 1024;
+    $options{ minChunkSize } //= 1024;
     $options{ forceChunkSize } //= 1;
     $options{ simultaneousUploads } ||= 3;
     $options{ fileParameterName } ||= 'file';
@@ -386,7 +386,7 @@ sub validateRequest {
 
     # Numbers should be numbers
     for my $param (qw(flowChunkNumber flowTotalChunks flowChunkSize flowTotalSize flowCurrentChunkSize)) {
-        if( exists $info->{ $param } and ! $info->{ $param } =~ /^[0-9]+$/) {
+        if( exists $info->{ $param } and $info->{ $param } !~ /^[0-9]+$/) {
             push @invalid, sprintf 'Parameter [%s] should be numeric, but is [%s]; set to 0',
                                 $param,
                                 $info->{$param}
@@ -464,7 +464,11 @@ sub validateRequest {
     }
 
     for my $param (qw(flowChunkSize flowCurrentChunkSize)) {
-        if( exists $info->{ $param } and $info->{ $param } < $self->{ minChunkSize } ) {
+        if( exists $info->{ $param } and $info->{ $param } < $self->{ minChunkSize }
+            and ( $info->{flowChunkNumber} < $info->{flowTotalChunks} # only last chunk could be smaller
+               or $info->{flowTotalChunks} <= 1                       # when total chunks > 1
+            )
+        ) {
             $min_max_error = 1;
             push @invalid, sprintf 'Uploaded chunk [%d] of file [%s] is too small [%d], allowed is [%d]',
                                 $info->{flowChunkNumber},
@@ -493,7 +497,7 @@ sub validateRequest {
                             $self->{maxChunkSize},
                             ;
 
-    } elsif( ! $min_max_error and ($info->{ flowCurrentChunkSize } || 0 ) < $self->expectedChunkSize( $info )) {
+    } elsif( ! $min_max_error and $info->{ flowCurrentChunkSize } < $self->expectedChunkSize( $info ) ) {
         # Uploaded chunk is a middle or end chunk but is too small
         push @invalid, sprintf 'Uploaded chunk [%s] is too small ([%d]) expect [%d]',
                             $info->{flowChunkNumber},
@@ -501,7 +505,15 @@ sub validateRequest {
                             $self->expectedChunkSize( $info ),
                             ;
 
-    } elsif( ! $min_max_error and ($info->{ flowCurrentChunkSize } || 0 ) > $self->expectedChunkSize( $info )) {
+    } elsif( ! $min_max_error and $method eq 'POST' and $info->{ localChunkSize } < $info->{ flowCurrentChunkSize } ) {
+        # Real uploaded chunk is smaller than provided chunk upload size
+        push @invalid, sprintf 'Uploaded chunk [%s] is too small ([%d]) expect [%d]',
+                            $info->{flowChunkNumber},
+                            $info->{localChunkSize},
+                            $info->{flowCurrentChunkSize},
+                            ;
+
+    } elsif( ! $min_max_error and $info->{ flowCurrentChunkSize } > $self->expectedChunkSize( $info ) ) {
         # Uploaded chunk is a middle or end chunk but is too large
         push @invalid, sprintf 'Uploaded chunk [%s] is too large ([%d]) expect [%d]',
                             $info->{flowChunkNumber},
@@ -544,6 +556,10 @@ sub expectedChunkSize {
     } elsif( ! $info->{flowChunkSize} ) {
         # No size, we guess it'll be zero:
         return 0
+
+    } elsif( ! $info->{flowTotalSize} ) {
+        # Total size is zero
+        return 0;
 
     } else {
         # The last chunk can be smaller or sized just like all the chunks
