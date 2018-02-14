@@ -1,7 +1,7 @@
 #!perl -w
 use strict;
 use warnings;
-use Test::More tests => 86;
+use Test::More tests => 87;
 use Data::Dumper;
 
 use HTTP::Upload::FlowJs;
@@ -372,5 +372,137 @@ for my $partname (sort keys %uploaded_parts) {
 };
 
 
+subtest 'Too small checks on edges' => sub {
+    my $flowjs = HTTP::Upload::FlowJs->new(
+        incomingDirectory => $tempdir,
+        minChunkSize => 512,
+        maxChunkSize => 1024,
+    );
+
+    # Assume file size is 1280: two chunks
+    #   1 - 1024
+    #   2 - 256
+    my %info = (
+        flowChunkNumber => 1,
+        flowChunkSize => 1024,
+        flowFilename => 'IMG_7363.JPG',
+        flowIdentifier => '2226376-IMG_7363JPG',
+        flowRelativePath => 'IMG_7363.JPG',
+        flowTotalChunks => 2,
+        flowTotalSize => 1280,
+        localChunkSize => 1024,
+        flowCurrentChunkSize => 1024,
+        file => $0,
+    );
+    my @errors = $flowjs->validateRequest(
+        'GET',
+        \%info,
+    );
+    is_deeply( \@errors, [], 'No errors 1/2');
+
+    %info = (
+        flowChunkNumber => 2,
+        flowChunkSize => 1024,
+        flowFilename => 'IMG_7363.JPG',
+        flowIdentifier => '2226376-IMG_7363JPG',
+        flowRelativePath => 'IMG_7363.JPG',
+        flowTotalChunks => 2,
+        flowTotalSize => 1280,
+        localChunkSize => 256,
+        flowCurrentChunkSize => 256,
+        file => $0,
+    );
+
+    @errors = $flowjs->validateRequest(
+        'GET',
+        \%info,
+    );
+
+    is_deeply( \@errors, [], 'No errors 2/2');
+
+
+    # Assume file size is 1024: one chunk
+    #   1 - 1024
+    %info = (
+        flowChunkNumber => 1,
+        flowChunkSize => 1024,
+        flowFilename => 'IMG_7363.JPG',
+        flowIdentifier => '2226376-IMG_7363JPG',
+        flowRelativePath => 'IMG_7363.JPG',
+        flowTotalChunks => 1,
+        flowTotalSize => 1024,
+        localChunkSize => 1024,
+        flowCurrentChunkSize => 1024,
+        file => $0,
+    );
+    @errors = $flowjs->validateRequest(
+        'GET',
+        \%info,
+    );
+    is_deeply( \@errors, [], 'No errors 1/1');
+
+    # Assume file size is 768: one chunk
+    #   1 - 768
+    %info = (
+        flowChunkNumber => 1,
+        flowChunkSize => 1024,
+        flowFilename => 'IMG_7363.JPG',
+        flowIdentifier => '2226376-IMG_7363JPG',
+        flowRelativePath => 'IMG_7363.JPG',
+        flowTotalChunks => 1,
+        flowTotalSize => 768,
+        localChunkSize => 768,
+        flowCurrentChunkSize => 768,
+        file => $0,
+    );
+    @errors = $flowjs->validateRequest(
+        'GET',
+        \%info,
+    );
+    is_deeply( \@errors, [], 'No errors 1/1');
+
+
+    # Assume file size is 512: one chunk
+    #   1 - 512
+    %info = (
+        flowChunkNumber => 1,
+        flowChunkSize => 1024,
+        flowFilename => 'IMG_7363.JPG',
+        flowIdentifier => '2226376-IMG_7363JPG',
+        flowRelativePath => 'IMG_7363.JPG',
+        flowTotalChunks => 1,
+        flowTotalSize => 512,
+        localChunkSize => 512,
+        flowCurrentChunkSize => 512,
+        file => $0,
+    );
+    @errors = $flowjs->validateRequest(
+        'GET',
+        \%info,
+    );
+    is_deeply( \@errors, [], 'No errors 1/1');
+
+    # Assume file size is 511: one chunk
+    #   1 - 511
+    %info = (
+        flowChunkNumber => 1,
+        flowChunkSize => 1024,
+        flowFilename => 'IMG_7363.JPG',
+        flowIdentifier => '2226376-IMG_7363JPG',
+        flowRelativePath => 'IMG_7363.JPG',
+        flowTotalChunks => 1,
+        flowTotalSize => 511,
+        localChunkSize => 511,
+        flowCurrentChunkSize => 511,
+        file => $0,
+    );
+    @errors = $flowjs->validateRequest(
+        'GET',
+        \%info,
+    );
+    is_deeply( \@errors, ['Uploaded chunk [1] of file [IMG_7363.JPG] is too small [511], allowed is [512]'], 'Has error 1/1');
+};
+
+diag explain \@errors;
 
 done_testing;

@@ -464,7 +464,11 @@ sub validateRequest {
     }
 
     for my $param (qw(flowChunkSize flowCurrentChunkSize)) {
-        if( exists $info->{ $param } and $info->{ $param } < $self->{ minChunkSize } ) {
+        if( exists $info->{ $param } and $info->{ $param } < $self->{ minChunkSize }
+            and ( $info->{flowChunkNumber} < $info->{flowTotalChunks} # only last chunk could be smaller
+               or $info->{flowTotalChunks} <= 1                       # when total chunks > 1
+            )
+        ) {
             $min_max_error = 1;
             push @invalid, sprintf 'Uploaded chunk [%d] of file [%s] is too small [%d], allowed is [%d]',
                                 $info->{flowChunkNumber},
