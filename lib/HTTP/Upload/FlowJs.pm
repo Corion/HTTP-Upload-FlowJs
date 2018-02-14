@@ -503,7 +503,7 @@ sub validateRequest {
 
     } elsif( ! $min_max_error and ($info->{ flowCurrentChunkSize } || 0 ) > $self->expectedChunkSize( $info )) {
         # Uploaded chunk is a middle or end chunk but is too large
-        push @invalid, sprintf 'Uploaded chunk [%s] is too small ([%d]) expect [%d]',
+        push @invalid, sprintf 'Uploaded chunk [%s] is too large ([%d]) expect [%d]',
                             $info->{flowChunkNumber},
                             $info->{flowCurrentChunkSize},
                             $self->expectedChunkSize( $info ),
