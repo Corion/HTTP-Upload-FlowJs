@@ -233,7 +233,7 @@ sub new {
     $options{ maxChunkCount } ||= 1000;
     $options{ maxFileSize } ||= 10_000_000;
     $options{ maxChunkSize } ||= 1024*1024;
-    $options{ minChunkSize } ||= 1024;
+    $options{ minChunkSize } //= 1024;
     $options{ forceChunkSize } //= 1;
     $options{ simultaneousUploads } ||= 3;
     $options{ fileParameterName } ||= 'file';
@@ -386,7 +386,7 @@ sub validateRequest {
 
     # Numbers should be numbers
     for my $param (qw(flowChunkNumber flowTotalChunks flowChunkSize flowTotalSize flowCurrentChunkSize)) {
-        if( exists $info->{ $param } and ! $info->{ $param } =~ /^[0-9]+$/) {
+        if( exists $info->{ $param } and $info->{ $param } !~ /^[0-9]+$/) {
             push @invalid, sprintf 'Parameter [%s] should be numeric, but is [%s]; set to 0',
                                 $param,
                                 $info->{$param}
@@ -556,6 +556,10 @@ sub expectedChunkSize {
     } elsif( ! $info->{flowChunkSize} ) {
         # No size, we guess it'll be zero:
         return 0
+
+    } elsif( ! $info->{flowTotalSize} ) {
+        # Total size is zero
+        return 0;
 
     } else {
         # The last chunk can be smaller or sized just like all the chunks

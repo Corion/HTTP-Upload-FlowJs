@@ -1,7 +1,7 @@
 #!perl -w
 use strict;
 use warnings;
-use Test::More tests => 88;
+use Test::More tests => 89;
 use Data::Dumper;
 
 use HTTP::Upload::FlowJs;
@@ -533,6 +533,46 @@ subtest 'Check local size' => sub {
         \%info,
     );
     is_deeply( \@errors, ['Uploaded chunk [1] is too small ([0]) expect [768]'], 'Has errors on POST');
+
+};
+
+subtest 'Zero size' => sub {
+    my $flowjs = HTTP::Upload::FlowJs->new(
+        incomingDirectory => $tempdir,
+        minChunkSize => 0,
+        maxChunkSize => 1024,
+    );
+
+    my %info = (
+        flowChunkNumber => 1,
+        flowChunkSize => 1024,
+        flowFilename => 'IMG_7363.JPG',
+        flowIdentifier => '2226376-IMG_7363JPG',
+        flowRelativePath => 'IMG_7363.JPG',
+        flowTotalChunks => 1,
+        flowTotalSize => 0,
+        localChunkSize => 0,
+        flowCurrentChunkSize => 0,
+        file => $0,
+    );
+    my @errors = $flowjs->validateRequest(
+        'GET',
+        \%info,
+    );
+    is_deeply( \@errors, [], 'No errors on GET');
+
+    # Min chunk size
+    $flowjs = HTTP::Upload::FlowJs->new(
+        incomingDirectory => $tempdir,
+        minChunkSize => 1,
+        maxChunkSize => 1024,
+    );
+
+    @errors = $flowjs->validateRequest(
+        'GET',
+        \%info,
+    );
+    is_deeply( \@errors, ['Uploaded chunk [1] of file [IMG_7363.JPG] is too small [0], allowed is [1]'], 'Has errors on GET');
 
 };
 
