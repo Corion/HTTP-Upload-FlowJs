@@ -1,7 +1,7 @@
 #!perl -w
 use strict;
 use warnings;
-use Test::More tests => 87;
+use Test::More tests => 88;
 use Data::Dumper;
 
 use HTTP::Upload::FlowJs;
@@ -100,7 +100,7 @@ is_deeply [ sort @errors ], [
         flowRelativePath => 'IMG_7363.JPG',
         flowTotalChunks => 1100,
         flowTotalSize => -s $0,
-        localChunkSize => 1,
+        localChunkSize => 1048576,
         flowCurrentChunkSize => 1048576,
         file => $0,
 );
@@ -501,6 +501,39 @@ subtest 'Too small checks on edges' => sub {
         \%info,
     );
     is_deeply( \@errors, ['Uploaded chunk [1] of file [IMG_7363.JPG] is too small [511], allowed is [512]'], 'Has error 1/1');
+};
+
+subtest 'Check local size' => sub {
+    my $flowjs = HTTP::Upload::FlowJs->new(
+        incomingDirectory => $tempdir,
+        minChunkSize => 512,
+        maxChunkSize => 1024,
+    );
+
+    my %info = (
+        flowChunkNumber => 1,
+        flowChunkSize => 1024,
+        flowFilename => 'IMG_7363.JPG',
+        flowIdentifier => '2226376-IMG_7363JPG',
+        flowRelativePath => 'IMG_7363.JPG',
+        flowTotalChunks => 1,
+        flowTotalSize => 768,
+        localChunkSize => 0,
+        flowCurrentChunkSize => 768,
+        file => $0,
+    );
+    my @errors = $flowjs->validateRequest(
+        'GET',
+        \%info,
+    );
+    is_deeply( \@errors, [], 'No errors on GET');
+
+    @errors = $flowjs->validateRequest(
+        'POST',
+        \%info,
+    );
+    is_deeply( \@errors, ['Uploaded chunk [1] is too small ([0]) expect [768]'], 'Has errors on POST');
+
 };
 
 diag explain \@errors;

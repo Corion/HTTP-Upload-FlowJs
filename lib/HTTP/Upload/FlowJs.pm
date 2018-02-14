@@ -497,7 +497,7 @@ sub validateRequest {
                             $self->{maxChunkSize},
                             ;
 
-    } elsif( ! $min_max_error and ($info->{ flowCurrentChunkSize } || 0 ) < $self->expectedChunkSize( $info )) {
+    } elsif( ! $min_max_error and $info->{ flowCurrentChunkSize } < $self->expectedChunkSize( $info ) ) {
         # Uploaded chunk is a middle or end chunk but is too small
         push @invalid, sprintf 'Uploaded chunk [%s] is too small ([%d]) expect [%d]',
                             $info->{flowChunkNumber},
@@ -505,7 +505,15 @@ sub validateRequest {
                             $self->expectedChunkSize( $info ),
                             ;
 
-    } elsif( ! $min_max_error and ($info->{ flowCurrentChunkSize } || 0 ) > $self->expectedChunkSize( $info )) {
+    } elsif( ! $min_max_error and $method eq 'POST' and $info->{ localChunkSize } < $info->{ flowCurrentChunkSize } ) {
+        # Real uploaded chunk is smaller than provided chunk upload size
+        push @invalid, sprintf 'Uploaded chunk [%s] is too small ([%d]) expect [%d]',
+                            $info->{flowChunkNumber},
+                            $info->{localChunkSize},
+                            $info->{flowCurrentChunkSize},
+                            ;
+
+    } elsif( ! $min_max_error and $info->{ flowCurrentChunkSize } > $self->expectedChunkSize( $info ) ) {
         # Uploaded chunk is a middle or end chunk but is too large
         push @invalid, sprintf 'Uploaded chunk [%s] is too large ([%d]) expect [%d]',
                             $info->{flowChunkNumber},
