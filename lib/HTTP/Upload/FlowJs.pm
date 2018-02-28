@@ -201,6 +201,10 @@ The default is to allow any kind of file
 If you need more advanced checking, do so after you've determined a file
 upload as complete with C<< $flowjs->uploadComplete >>.
 
+B<fileParameterName> - The name of the multipart POST parameter to use for the file chunk
+
+Default: file
+
 =back
 
 More interesting limits would be hard maxima for the number of pending
@@ -221,6 +225,7 @@ sub new( $class, %options ) {
     $options{ forceChunkSize } ||= 1;
     $options{ simultaneousUploads } ||= 3;
     $options{ mime } ||= MIME::Detect->new();
+    $options{ fileParameterName } ||= 'file';
     $options{ allowedContentType } ||= sub { 1 };
 
     bless \%options => $class;
@@ -275,6 +280,41 @@ sub jsConfigStr( $self, %override ) {
     encode_json($self->js_Config(%override))
 }
 
+=head2 C<< $flowjs->params >>
+
+    my $params = params();                 # request params
+    my @parameter_names = $flowjs->params; # params needed by Flowjs
+
+    my %info;
+    @info{ @parameter_names } = @{$params}{@parameter_names};
+
+    $info{ file }           = $params{ file };
+    $info{ localChunkSize } = -s $params{ file };
+
+    my @invalid = $flowjs->validateRequest( 'POST', \%info );
+
+Returns needed params for validating request.
+
+=cut
+
+sub params( $self, $required_params ) {
+    state $params = {
+        flowChunkNumber  => 1,
+        flowTotalChunks  => 1,
+        flowChunkSize    => 1,
+        flowTotalSize    => 1,
+        flowIdentifier   => 1,
+        flowFilename     => 1,
+        flowRelativePath => 0,
+    };
+
+    if ( $required_params ) {
+        return grep { $params->{$_} } keys( %{$params} );
+    }
+
+    return keys( %{$params} );
+}
+
 =head2 C<< $flowjs->validateRequest >>
 
     my $session_id = '';
@@ -289,6 +329,9 @@ sub jsConfigStr( $self, %override ) {
 Does formal validation of the request HTTP parameters. It does not
 check previously stored information.
 
+B<Note> when C<POST> there are addition required params C<localChunkSize>
+and C<$self->{fileParameterName}> (default 'file').
+
 =cut
 
 sub validateRequest( $self, $method, $info, $sessionId=undef ) {
@@ -297,11 +340,9 @@ sub validateRequest( $self, $method, $info, $sessionId=undef ) {
 
     my @invalid;
 
-    my @required = qw(flowChunkNumber flowTotalChunks flowChunkSize
-                      flowTotalSize flowFilename flowIdentifier
-                      );
+    my @required = $self->params('required');
     if( $method eq 'POST') {
-        push @required, 'file', 'localChunkSize'
+        push @required, $self->{fileParameterName}, 'localChunkSize'
             ;
     };
 
