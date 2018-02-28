@@ -1,3 +1,5 @@
-0.01 2017xxxx
+0.01 20180228
     . Released on an unsuspecting world
     . Spun off from an unreleased chat application, "mychat"
+	. Many bugfixes, documentation and test contribution
+	  by Dmitry Latin (https://github.com/dim0xff)
