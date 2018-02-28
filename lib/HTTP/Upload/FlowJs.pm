@@ -271,26 +271,29 @@ object for inclusion with the JS side of the world
 
 sub jsConfig( $self, %override ) {
 
+
     # The last uploaded chunk will be at least this size and up to two the size
     # when forceChunkSize is false
     my $chunkSize = $self->{maxChunkSize};
     $chunkSize = $chunkSize / 2 unless $self->{forceChunkSize};
 
-    {
-        map { $_ => $self->{$_} } (qw(
-            simultaneousUploads
-            forceChunkSize
-        )),
+    +{
+        (
+            map { $_ => $self->{$_} } (qw(
+                simultaneousUploads
+                forceChunkSize
+            ))
+        ),
         chunkSize => $chunkSize,
         testChunks => 1,
         withCredentials => 1,
         uploadMethod => 'POST',
         %override,
-    }
+    };
 }
 
 sub jsConfigStr( $self, %override ) {
-    encode_json($self->js_Config(%override))
+    encode_json($self->jsConfig(%override))
 }
 
 =head2 C<< $flowjs->params >>
