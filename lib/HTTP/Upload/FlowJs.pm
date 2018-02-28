@@ -298,7 +298,7 @@ Returns needed params for validating request.
 =cut
 
 sub params( $self, $required_params ) {
-    state $params = {
+    my $params = $self->{_params} ||= {
         flowChunkNumber  => 1,
         flowTotalChunks  => 1,
         flowChunkSize    => 1,
