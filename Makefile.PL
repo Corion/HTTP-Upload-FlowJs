@@ -46,6 +46,9 @@ my %module = (
     },
     LICENSE             => 'perl',
     PL_FILES            => {},
+    TEST_REQUIRES => {
+        'Test::More' => '1.302007', # for subtest
+    },
     PREREQ_PM => {
         'Carp' => 0,
         'Filter::signatures' => 0.04, # For compatibility with Perl < 5.22
