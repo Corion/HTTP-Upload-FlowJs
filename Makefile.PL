@@ -51,6 +51,7 @@ my %module = (
     },
     PREREQ_PM => {
         'Carp' => 0,
+        'Filter::Util::Call' => '1.30', # a test commit to see what Filter::signatures really needs
         'Filter::signatures' => '0.10', # For compatibility with Perl < 5.22
         'Test::More' => 0,
         'JSON'           => 0, # Just for the interface
