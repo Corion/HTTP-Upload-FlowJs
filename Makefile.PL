@@ -51,7 +51,7 @@ my %module = (
     },
     PREREQ_PM => {
         'Carp' => 0,
-        'Filter::signatures' => 0.04, # For compatibility with Perl < 5.22
+        'Filter::signatures' => '0.10', # For compatibility with Perl < 5.22
         'Test::More' => 0,
         'JSON'           => 0, # Just for the interface
         'Data::Dumper'      => 0, # for printing clean values to logfiles
