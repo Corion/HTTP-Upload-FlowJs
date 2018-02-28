@@ -100,7 +100,7 @@ is_deeply [ sort @errors ], [
         flowRelativePath => 'IMG_7363.JPG',
         flowTotalChunks => 1100,
         flowTotalSize => -s $0,
-        localChunkSize => 1,
+        localChunkSize => 1048576,
         flowCurrentChunkSize => 1048576,
         file => $0,
 );
