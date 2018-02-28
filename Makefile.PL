@@ -23,7 +23,7 @@ my %module = (
     AUTHOR              => q{Max Maischein <corion@cpan.org>},
     VERSION_FROM        => $main_file,
     ABSTRACT_FROM       => $main_file,
-    MIN_PERL_VERSION => '5.006',
+    MIN_PERL_VERSION => '5.010', # we use //
     META_MERGE => {
         "meta-spec" => { version => 2 },
         resources => {
