@@ -33,6 +33,7 @@ script:
   - cd $BUILD_DIR
   - cpanm --installdeps .
   - perl Makefile.PL && make
+  - prove --version
   - prove -blv $(test-dirs)
 
 branches:
