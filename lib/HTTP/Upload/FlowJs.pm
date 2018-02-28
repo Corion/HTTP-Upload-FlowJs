@@ -82,7 +82,7 @@ plugins for L<Dancer> and L<Mojolicious> planned.
     if( $flowjs->uploadComplete( \%info, undef )) {
         # Combine all chunks to final name
 
-        my $digest = Digest::SHA1->new();
+        my $digest = Digest::SHA256->new();
 
         my( $content_type, $ext ) = $flowjs->sniffContentType();
         my $final_name = "file1.$ext";
@@ -670,7 +670,7 @@ sub sniffContentType( $self, $info, $sessionPrefix=undef ) {
   open my $file, '>', 'user_upload.jpg'
       or die "Couldn't create final file 'user_upload.jpg': $!";
   binmode $file;
-  my $digest = Digest::MD5->new();
+  my $digest = Digest::SHA256->new();
   my($ok,@unlink) = $flowjs->combineChunks( $info, undef, $file, $digest );
   close $file;
 
