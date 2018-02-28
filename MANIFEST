@@ -10,6 +10,7 @@ META.json
 META.yml
 README
 README.mkdn
+t/00-load.t
 t/002_http_upload_disallowedContentType.t
 t/003_http_upload_flowjs.t
 xt/99-changes.t
