@@ -269,12 +269,10 @@ object for inclusion with the JS side of the world
 =cut
 
 sub jsConfig( $self, %override ) {
-
-
     # The last uploaded chunk will be at least this size and up to two the size
     # when forceChunkSize is false
     my $chunkSize = $self->{maxChunkSize};
-    $chunkSize = $chunkSize / 2 unless $self->{forceChunkSize};
+    $chunkSize = $chunkSize / 2 unless $self->{forceChunkSize}; # / placate Filter::Simple
 
     +{
         (
@@ -690,7 +688,7 @@ and the index are optional.
 
 sub chunkContent( $self, $info, $sessionPrefix=undef, $index=0 ) {
     my $chunk = $self->chunkFh( $info, $sessionPrefix, $index );
-    local $/;
+    local $/; # / placate Filter::Simple
     <$chunk>
 }
 
