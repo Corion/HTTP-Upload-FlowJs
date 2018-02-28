@@ -860,7 +860,7 @@ It defaults to C<time>.
 
 =cut
 
-sub staleUploads( $self, $timeout = 3600, $now = time() ) {
+sub staleUploads( $self, $timeout = 3600, $now = time ) {
     my $cutoff = $now - $timeout;
     my %mtime;
     my @files = reverse sort $self->pendingUploads();
@@ -904,7 +904,7 @@ will delete files from another instance.
 
 =cut
 
-sub purgeStaleOrInvalid($self, $timeout = 3600, $now = time() ) {
+sub purgeStaleOrInvalid($self, $timeout = 3600, $now = time ) {
     # First, kill off all stale files
     my @errors;
     for my $f ($self->staleUploads( $timeout, $now )) {
