@@ -821,7 +821,7 @@ L<https://github.com/Corion/HTTP-Upload-FlowJs>.
 =head1 SUPPORT
 
 The public support forum of this module is
-L<http://perlmonks.org/>.
+L<https://perlmonks.org/>.
 
 =head1 BUG TRACKER
 
