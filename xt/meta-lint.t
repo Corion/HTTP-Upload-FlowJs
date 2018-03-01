@@ -10,6 +10,7 @@ use Test::More;
 use Parse::CPAN::Meta;
 use CPAN::Meta::Validator;
 
+use lib '.';
 use vars '%module';
 require 'Makefile.PL';
 # Loaded from Makefile.PL

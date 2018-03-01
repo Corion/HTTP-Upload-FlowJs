@@ -23,7 +23,7 @@ my %module = (
     AUTHOR              => q{Max Maischein <corion@cpan.org>},
     VERSION_FROM        => $main_file,
     ABSTRACT_FROM       => $main_file,
-    MIN_PERL_VERSION => '5.006',
+    MIN_PERL_VERSION => '5.010', # we use //
     META_MERGE => {
         "meta-spec" => { version => 2 },
         resources => {
@@ -46,9 +46,12 @@ my %module = (
     },
     LICENSE             => 'perl',
     PL_FILES            => {},
+    TEST_REQUIRES => {
+        'Test::More' => '1.302007', # for subtest
+    },
     PREREQ_PM => {
         'Carp' => 0,
-        'Filter::signatures' => 0.04, # For compatibility with Perl < 5.22
+        'Filter::signatures' => '0.10', # For compatibility with Perl < 5.22
         'Test::More' => 0,
         'JSON'           => 0, # Just for the interface
         'Data::Dumper'      => 0, # for printing clean values to logfiles

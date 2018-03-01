@@ -5,10 +5,8 @@ use Carp qw(croak);
 use HTTP::Upload::FlowJs::Utils qw(clean_fragment mime_detect);
 use Data::Dumper;
 
-use vars '$VERSION';
-$VERSION = '0.01';
+our $VERSION = '0.01';
 
-use feature qw(state);
 use JSON qw(encode_json decode_json);
 
 =head1 NAME
@@ -81,7 +79,7 @@ plugins for L<Dancer> and L<Mojolicious> planned.
     if( $flowjs->uploadComplete( \%info, undef )) {
         # Combine all chunks to final name
 
-        my $digest = Digest::SHA1->new();
+        my $digest = Digest::SHA256->new();
 
         my( $content_type, $ext ) = $flowjs->sniffContentType();
         my $final_name = "file1.$ext";
@@ -236,8 +234,8 @@ sub new {
     $options{ minChunkSize } //= 1024;
     $options{ forceChunkSize } //= 1;
     $options{ simultaneousUploads } ||= 3;
-    $options{ fileParameterName } ||= 'file';
     $options{ mime } ||= mime_detect();
+    $options{ fileParameterName } ||= 'file';
     $options{ allowedContentType } ||= sub { 1 };
 
     bless \%options => $class;
@@ -275,11 +273,10 @@ object for inclusion with the JS side of the world
 sub jsConfig {
     my ( $self, %override ) = @_;
 
-
     # The last uploaded chunk will be at least this size and up to two the size
     # when forceChunkSize is false
     my $chunkSize = $self->{maxChunkSize};
-    $chunkSize = $chunkSize / 2 unless $self->{forceChunkSize};
+    $chunkSize = $chunkSize / 2 unless $self->{forceChunkSize}; # / placate Filter::Simple
 
     +{
         (
@@ -322,7 +319,7 @@ Returns needed params for validating request.
 sub params {
     my ( $self, $required_params ) = @_;
 
-    state $params = {
+    my $params = $self->{_params} ||= {
         flowChunkNumber      => 1,
         flowTotalChunks      => 1,
         flowChunkSize        => 1,
@@ -725,7 +722,7 @@ sub chunkContent {
     $index //= 0;
 
     my $chunk = $self->chunkFh( $info, $sessionPrefix, $index );
-    local $/;
+    local $/; # / placate Filter::Simple
     <$chunk>
 }
 
@@ -822,7 +819,7 @@ sub sniffContentType {
   open my $file, '>', 'user_upload.jpg'
       or die "Couldn't create final file 'user_upload.jpg': $!";
   binmode $file;
-  my $digest = Digest::MD5->new();
+  my $digest = Digest::SHA256->new();
   my($ok,@unlink) = $flowjs->combineChunks( $info, undef, $file, $digest );
   close $file;
 
@@ -987,7 +984,7 @@ L<https://github.com/Corion/HTTP-Upload-FlowJs>.
 =head1 SUPPORT
 
 The public support forum of this module is
-L<http://perlmonks.org/>.
+L<https://perlmonks.org/>.
 
 =head1 BUG TRACKER
 

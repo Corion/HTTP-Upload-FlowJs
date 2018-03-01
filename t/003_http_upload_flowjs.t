@@ -8,7 +8,7 @@ use HTTP::Upload::FlowJs;
 use File::Temp qw(tempdir);
 use ExtUtils::Command();
 
-my $tempdir = tempdir( );
+my $tempdir = tempdir();
 END {
     if( defined $tempdir ) {
         diag "Cleaning up $tempdir";

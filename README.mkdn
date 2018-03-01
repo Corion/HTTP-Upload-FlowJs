@@ -10,22 +10,23 @@ plugins for [Dancer](https://metacpan.org/pod/Dancer) and [Mojolicious](https://
     use HTTP::Upload::FlowJs;
 
     my @parameter_names = (
-      'file', # The name of the file
-      'flowChunkNumber', # The index of the chunk in the current upload.
-                         # First chunk is 1 (no base-0 counting here).
-      'flowTotalChunks', # The total number of chunks.
-      'flowChunkSize', # The general chunk size. Using this value and
-                       # flowTotalSize you can calculate the total number of
-                       # chunks. Please note that the size of the data received in
-                       # the HTTP might be lower than flowChunkSize of this for
-                       # the last chunk for a file.
-      'flowTotalSize', #  The total file size.
-      'flowIdentifier', # A unique identifier for the file contained in the request.
-      'flowFilename', # The original file name (since a bug in Firefox results in
-                      # the file name not being transmitted in chunk
-                      # multipart posts).
-      'flowRelativePath', # The file's relative path when selecting a directory
-                          # (defaults to file name in all browsers except Chrome).
+      'file',                 # The name of the file
+      'flowChunkNumber',      # The index of the chunk in the current upload.
+                              # First chunk is 1 (no base-0 counting here).
+      'flowTotalChunks',      # The total number of chunks.
+      'flowCurrentChunkSize', # Current chunk size
+      'flowChunkSize',        # The general chunk size. Using this value and
+                              # flowTotalSize you can calculate the total number of
+                              # chunks. Please note that the size of the data received in
+                              # the HTTP might be lower than flowChunkSize of this for
+                              # the last chunk for a file.
+      'flowTotalSize',        #  The total file size.
+      'flowIdentifier',       # A unique identifier for the file contained in the request.
+      'flowFilename',         # The original file name (since a bug in Firefox results in
+                              # the file name not being transmitted in chunk
+                              # multipart posts).
+      'flowRelativePath',     # The file's relative path when selecting a directory
+                              # (defaults to file name in all browsers except Chrome).
     );
 
     # In your POST handler for /upload:
@@ -67,7 +68,7 @@ plugins for [Dancer](https://metacpan.org/pod/Dancer) and [Mojolicious](https://
       if( $flowjs->uploadComplete( \%info, undef )) {
           # Combine all chunks to final name
 
-          my $digest = Digest::SHA1->new();
+          my $digest = Digest::SHA256->new();
 
           my( $content_type, $ext ) = $flowjs->sniffContentType();
           my $final_name = "file1.$ext";
@@ -147,11 +148,21 @@ or [Dancer](https://metacpan.org/pod/Dancer) for that.
         },
     );
 
+> **incomingDirectory** - path for the temporary upload parts
+>
+> Required
+>
 > **maxChunkCount** - hard maximum chunks allowed for a single upload
+>
+> Default 1000
 >
 > **maxFileSize** - hard maximum total file size for a single upload
 >
+> Default 10\_000\_000
+>
 > **maxChunkSize** - hard maximum chunk size for a single chunk
+>
+> Default 1048576
 >
 > **minChunkSize** - hard minimum chunk size for a single chunk
 >
@@ -161,7 +172,19 @@ or [Dancer](https://metacpan.org/pod/Dancer) for that.
 > works on the first chunk. If the first chunk is too small, its file type
 > cannot be checked.
 >
+> **forceChunkSize** - force all chunks to be less or equal than `maxChunkSize`
+>
+> Default: true
+>
+> Otherwise, the last chunk will be greater than or equal to `maxChunkSize`
+> (the last uploaded chunk will be at least this size and up to two the size).
+>
+> Note: when `forceChunkSize` is `false` it only make `chunkSize` value in
+> ["jsConfig"](#jsconfig) equal to `maxChunkSize / 2`.
+>
 > **simultaneousUploads** - simultaneously allowed uploads per file
+>
+> Default 3
 >
 > This is just an indication to the Javascript `flow.js` client
 > if you pass it the configuration from this object. This is not enforced
@@ -173,6 +196,10 @@ or [Dancer](https://metacpan.org/pod/Dancer) for that.
 >
 > If you need more advanced checking, do so after you've determined a file
 > upload as complete with `$flowjs->uploadComplete`.
+>
+> **fileParameterName** - The name of the multipart POST parameter to use for the file chunk
+>
+> Default file
 
 More interesting limits would be hard maxima for the number of pending
 uploads or the number of outstanding chunks per user/session. Checking
@@ -181,12 +208,33 @@ fairly disk-intensive on some systems.
 
 ## `$flowjs->jsConfig`
 
+    # Perl HASH
     my $config = $flowjs->jsConfig(
+        target => '/upload',
+    );
+
+    # JSON string
+    my $config = $flowjs->jsConfigStr(
         target => '/upload',
     );
 
 Create a JSON string that encapsulates the configuration of the Perl
 object for inclusion with the JS side of the world
+
+## `$flowjs->params`
+
+    my $params = params();                 # request params
+    my @parameter_names = $flowjs->params; # params needed by Flowjs
+
+    my %info;
+    @info{ @parameter_names } = @{$params}{@parameter_names};
+
+    $info{ file }           = $params{ file };
+    $info{ localChunkSize } = -s $params{ file };
+
+    my @invalid = $flowjs->validateRequest( 'POST', \%info );
+
+Returns needed params for validating request.
 
 ## `$flowjs->validateRequest`
 
@@ -201,6 +249,9 @@ object for inclusion with the JS side of the world
 
 Does formal validation of the request HTTP parameters. It does not
 check previously stored information.
+
+**Note** when `POST` there are addition required params `localChunkSize`
+and `$self-`{fileParameterName}> (default 'file').
 
 ## `$flowJs->expectedChunkSize`
 
@@ -309,7 +360,7 @@ check the upload type.
     open my $file, '>', 'user_upload.jpg'
         or die "Couldn't create final file 'user_upload.jpg': $!";
     binmode $file;
-    my $digest = Digest::MD5->new();
+    my $digest = Digest::SHA256->new();
     my($ok,@unlink) = $flowjs->combineChunks( $info, undef, $file, $digest );
     close $file;
 
@@ -369,7 +420,7 @@ The public repository of this module is
 # SUPPORT
 
 The public support forum of this module is
-[http://perlmonks.org/](http://perlmonks.org/).
+[https://perlmonks.org/](https://perlmonks.org/).
 
 # BUG TRACKER
 
