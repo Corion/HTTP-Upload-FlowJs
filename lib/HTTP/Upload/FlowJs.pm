@@ -196,7 +196,7 @@ Otherwise, the last chunk will be greater than or equal to C<maxChunkSize>
 (the last uploaded chunk will be at least this size and up to two the size).
 
 Note: when C<forceChunkSize> is C<false> it only make C<chunkSize> value in
-L</jsConfig> equal to C<maxChunkSize / 2>.
+L</jsConfig> equal to C<maxChunkSize/2>.
 
 B<simultaneousUploads> - simultaneously allowed uploads per file
 
@@ -272,7 +272,7 @@ sub jsConfig( $self, %override ) {
     # The last uploaded chunk will be at least this size and up to two the size
     # when forceChunkSize is false
     my $chunkSize = $self->{maxChunkSize};
-    $chunkSize = $chunkSize / 2 unless $self->{forceChunkSize}; # / placate Filter::Simple
+    $chunkSize = $chunkSize/2 unless $self->{forceChunkSize}; # / placate Filter::Simple
 
     +{
         (
