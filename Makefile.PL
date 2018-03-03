@@ -42,7 +42,16 @@ my %module = (
                 file    => $main_file,
                 version => $main_version,
             }
-        }
+        },
+        prereqs => {
+            runtime => {
+                recommends => {
+                    'Filter::signatures' => '0.10', # For compatibility with Perl < 5.22
+                    'MIME::Detect'      => 0, # for user generated content
+                    'Text::CleanFragment' => 0, # we want to create clean local filenames
+                },
+            },
+        },
     },
     LICENSE             => 'perl',
     PL_FILES            => {},
@@ -51,13 +60,9 @@ my %module = (
     },
     PREREQ_PM => {
         'Carp' => 0,
-        'Filter::signatures' => '0.10', # For compatibility with Perl < 5.22
         'Test::More' => 0,
         'JSON'           => 0, # Just for the interface
         'Data::Dumper'      => 0, # for printing clean values to logfiles
-        
-        'MIME::Detect'      => 0, # for user generated content
-        'Text::CleanFragment' => 0, # we want to create clean local filenames
     },
     dist                => { COMPRESS => 'gzip -9f', SUFFIX => 'gz', },
     clean               => { FILES => 'HTTP-Upload-FlowJs-*' },

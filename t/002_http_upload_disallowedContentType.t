@@ -1,12 +1,22 @@
 #!perl -w
 use strict;
 use warnings;
-use Test::More tests => 3;
+use Test::More;
 use Data::Dumper;
 use File::Temp 'tempdir';
 use File::Copy 'cp';
 
 use HTTP::Upload::FlowJs;
+
+BEGIN {
+    eval 'use MIME::Detect';
+    if( $@ ) {
+        plan skip_all => 'No MIME::Detect installed';
+    }
+    else {
+        plan tests => 3;
+    }
+}
 
 my $tempdir = tempdir();
 

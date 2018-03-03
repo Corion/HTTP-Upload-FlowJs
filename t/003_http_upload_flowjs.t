@@ -226,11 +226,17 @@ for my $chunk (@parts) {
     print $fh part($chunk);
     close $fh;
     push @uploaded_parts, $tempname;
-    
+
     my( $content_type, $ext ) = $flowjs->sniffContentType(\%info);
     if( exists $seen{1}) {
-        is $content_type, 'image/png', "Once we see the first chunk, we find the correct content type";
-        is $ext, 'png', "Once we see the first chunk, we find the correct extension";
+        if ( $flowjs->mime ) {
+            is $content_type, 'image/png', "Once we see the first chunk, we find the correct content type";
+            is $ext, 'png', "Once we see the first chunk, we find the correct extension";
+        }
+        else {
+            is $content_type, undef, "Unknown content type or no MIME::Detect installed";
+            is $ext, undef, "Unknown extension or no MIME::Detect installed";
+        }
     } else {
         is $content_type, undef, "Until we see the first chunk, we don't know the content type";
         is $ext, undef, "Until we see the first chunk, we don't know the extension";
@@ -316,9 +322,15 @@ for my $chunk (@parts, 2..parts) {
     close $fh;
     $uploaded_parts{ $tempname } = 1;
 
+
     my $res = $flowjs->disallowedContentType(\%info);
     if( exists $seen{1}) {
-        is $res, 'image/png', "Once we see the first chunk, we find the file is disallowed";
+        if ( $flowjs->mime ) {
+            is $res, 'image/png', "Once we see the first chunk, we find the file is disallowed";
+        }
+        else {
+            is $res, undef, "Unknown content type or no MIME::Detect installed";
+        }
     } else {
         is $res, undef, "Until we see the first chunk, we don't know if the file is disallowed";
     };

@@ -1,12 +1,9 @@
 package HTTP::Upload::FlowJs;
 use strict;
 use Carp qw(croak);
-use Filter::signatures;
-no warnings 'experimental::signatures';
-use feature 'signatures';
-use Text::CleanFragment 'clean_fragment';
+
+use HTTP::Upload::FlowJs::Utils qw(clean_fragment mime_detect);
 use Data::Dumper;
-use MIME::Detect;
 
 our $VERSION = '0.01';
 
@@ -226,7 +223,8 @@ fairly disk-intensive on some systems.
 
 =cut
 
-sub new( $class, %options ) {
+sub new {
+    my ( $class, %options ) = @_;
     croak "Need a directory name for the temporary upload parts"
         unless $options{ incomingDirectory };
 
@@ -236,18 +234,22 @@ sub new( $class, %options ) {
     $options{ minChunkSize } //= 1024;
     $options{ forceChunkSize } //= 1;
     $options{ simultaneousUploads } ||= 3;
-    $options{ mime } ||= MIME::Detect->new();
+    $options{ mime } ||= mime_detect();
     $options{ fileParameterName } ||= 'file';
     $options{ allowedContentType } ||= sub { 1 };
 
     bless \%options => $class;
 };
 
-sub incomingDirectory( $self ) {
+sub incomingDirectory {
+    my ($self) = @_;
+
     $self->{incomingDirectory};
 };
 
-sub mime($self) {
+sub mime {
+    my ($self) = @_;
+
     $self->{mime}
 };
 
@@ -268,7 +270,9 @@ object for inclusion with the JS side of the world
 
 =cut
 
-sub jsConfig( $self, %override ) {
+sub jsConfig {
+    my ( $self, %override ) = @_;
+
     # The last uploaded chunk will be at least this size and up to two the size
     # when forceChunkSize is false
     my $chunkSize = $self->{maxChunkSize};
@@ -289,7 +293,9 @@ sub jsConfig( $self, %override ) {
     };
 }
 
-sub jsConfigStr( $self, %override ) {
+sub jsConfigStr {
+    my ( $self, %override ) = @_;
+
     encode_json($self->jsConfig(%override))
 }
 
@@ -310,7 +316,9 @@ Returns needed params for validating request.
 
 =cut
 
-sub params( $self, $required_params ) {
+sub params {
+    my ( $self, $required_params ) = @_;
+
     my $params = $self->{_params} ||= {
         flowChunkNumber      => 1,
         flowTotalChunks      => 1,
@@ -348,7 +356,9 @@ and C<$self->{fileParameterName}> (default 'file').
 
 =cut
 
-sub validateRequest( $self, $method, $info, $sessionId=undef ) {
+sub validateRequest {
+    my ( $self, $method, $info, $sessionId ) = @_;
+
     # Validate the input somewhat
     local $Data::Dumper::Useqq = 1;
 
@@ -376,7 +386,7 @@ sub validateRequest( $self, $method, $info, $sessionId=undef ) {
         if( exists $info->{ $param } and $info->{ $param } !~ /^[0-9]+$/) {
             push @invalid, sprintf 'Parameter [%s] should be numeric, but is [%s]; set to 0',
                                 $param,
-                                Dumper $info->{$param}
+                                $info->{$param}
                                 ;
             $info->{ $param } = 0;
         };
@@ -408,7 +418,7 @@ sub validateRequest( $self, $method, $info, $sessionId=undef ) {
         if( exists $info->{ $param } and $info->{ $param } =~ m![/\\]! ) {
             push @invalid, sprintf 'Parameter [%s] contains invalid path segments',
                                 $param,
-                                Dumper $info->{$param}
+                                $info->{$param}
                                 ;
         };
     };
@@ -419,7 +429,7 @@ sub validateRequest( $self, $method, $info, $sessionId=undef ) {
         if( exists $info->{ $param } and $info->{ $param } =~ m![/\\]\.\.[/\\]! ) {
             push @invalid, sprintf 'Parameter [%s] contains invalid upward path segments [%s]',
                                 $param,
-                                Dumper $info->{$param}
+                                $info->{$param}
                                 ;
         };
     };
@@ -429,7 +439,7 @@ sub validateRequest( $self, $method, $info, $sessionId=undef ) {
         if( exists $info->{ $param } and $info->{ $param } =~ m![\x00-\x1f]! ) {
             push @invalid, sprintf 'Parameter [%s] contains control characters [%s]',
                                 $param,
-                                Dumper $info->{$param}
+                                $info->{$param}
                                 ;
         };
     };
@@ -526,7 +536,11 @@ chunk as indicated by C<$info>.
 
 =cut
 
-sub expectedChunkSize( $self, $info, $index=0 ) {
+sub expectedChunkSize {
+    my ( $self, $info, $index ) = @_;
+
+    $index //= 0;
+
     # If we are not the last chunk, we need to be what the information says:
     $index ||= $info->{flowChunkNumber};
     if( ! $info->{flowTotalChunks}) {
@@ -566,7 +580,9 @@ is passed, it will remove all partial files from the directory.
 
 =cut
 
-sub resetUploadDirectories( $self, $wipe=undef ) {
+sub resetUploadDirectories {
+    my ( $self, $wipe ) = @_;
+
     my $dir = $self->{incomingDirectory};
     if( ! -d $dir ) {
         mkdir $dir
@@ -592,7 +608,11 @@ the current chunk.
 
 =cut
 
-sub chunkName( $self, $info, $sessionPrefix=undef, $index=0 ) {
+sub chunkName {
+    my ( $self, $info, $sessionPrefix, $index ) = @_;
+
+    $index //= 0;
+
     my $dir = $self->{incomingDirectory};
     $sessionPrefix = '' unless defined $sessionPrefix;
     my $chunkname = sprintf "%s/%s%s.part%03d",
@@ -622,7 +642,11 @@ sub chunkName( $self, $info, $sessionPrefix=undef, $index=0 ) {
 
 =cut
 
-sub chunkOK($self, $info, $sessionPrefix=undef, $index=0) {
+sub chunkOK {
+    my ( $self, $info, $sessionPrefix, $index ) = @_;
+
+    $index //= 0;
+
     my @messages = $self->validateRequest( 'GET', $info, $sessionPrefix );
     if( @messages ) {
         return 500, @messages
@@ -645,7 +669,9 @@ sub chunkOK($self, $info, $sessionPrefix=undef, $index=0) {
 
 =cut
 
-sub uploadComplete( $self, $info, $sessionPrefix=undef ) {
+sub uploadComplete {
+    my ( $self, $info, $sessionPrefix) = @_;
+
     my $complete = 1;
     for( 1.. $info->{ flowTotalChunks }) {
         my( $status, @messages ) = $self->chunkOK( $info, $sessionPrefix, $_ ) ;
@@ -667,7 +693,11 @@ and the index are optional.
 
 =cut
 
-sub chunkFh( $self, $info, $sessionPrefix=undef, $index=0 ) {
+sub chunkFh {
+    my ( $self, $info, $sessionPrefix, $index ) = @_;
+
+    $index //= 0;
+
     my %info = %$info;
     $info{ chunkNumber } = $index if $index;
     my $chunkname = $self->chunkName( \%info, $sessionPrefix, $index );
@@ -686,7 +716,11 @@ and the index are optional.
 
 =cut
 
-sub chunkContent( $self, $info, $sessionPrefix=undef, $index=0 ) {
+sub chunkContent {
+    my ( $self, $info, $sessionPrefix, $index ) = @_;
+
+    $index //= 0;
+
     my $chunk = $self->chunkFh( $info, $sessionPrefix, $index );
     local $/; # / placate Filter::Simple
     <$chunk>
@@ -703,7 +737,9 @@ this MIME type. Unrecognized files will be blocked.
 
 =cut
 
-sub disallowedContentType( $self, $info, $session=undef ) {
+sub disallowedContentType {
+    my ( $self, $info, $session) = @_;
+
     my( $content_type, $image_ext ) = $self->sniffContentType($info,$session);
     if( !defined $content_type ) {
         # we need more chunks uploaded to check the content type
@@ -745,24 +781,31 @@ check the upload type.
 
 =cut
 
-sub sniffContentType( $self, $info, $sessionPrefix=undef ) {
+sub sniffContentType {
+    my ( $self, $info, $sessionPrefix ) = @_;
+
     my( $content_type, $image_ext );
 
     my( $status, @messages ) = $self->chunkOK( $info, $sessionPrefix, 1 );
-    if( 200 == $status ) {
-        my $fh = $self->chunkFh( $info, $sessionPrefix, 1 );
-        my $t = $self->mime->mime_type($fh);
-        if( $t ) {
-            $content_type = $t->mime_type;
-            $image_ext    = $t->extension;
-        } else {
-            $content_type = '';
-            $image_ext    = '';
-        };
 
-    } else {
-        # Chunk 1 not uploaded/complete yet
+    if ( $self->mime ) {
+        if( 200 == $status ) {
+
+            my $fh = $self->chunkFh( $info, $sessionPrefix, 1 );
+            my $t = $self->mime->mime_type($fh);
+            if( $t ) {
+                $content_type = $t->mime_type;
+                $image_ext    = $t->extension;
+            } else {
+                $content_type = '';
+                $image_ext    = '';
+            };
+
+        } else {
+            # Chunk 1 not uploaded/complete yet
+        }
     }
+
     return $content_type, $image_ext;
 };
 
@@ -792,7 +835,9 @@ sub sniffContentType( $self, $info, $sessionPrefix=undef ) {
 
 =cut
 
-sub combineChunks( $self, $info, $sessionPrefix, $target_fh, $digest=undef ) {
+sub combineChunks {
+    my ( $self, $info, $sessionPrefix, $target_fh, $digest ) = @_;
+
     my @unlink_chunks;
     my $ok = 1;
     for( 1.. $info->{ flowTotalChunks }) {
@@ -818,7 +863,9 @@ than one chunk.
 
 =cut
 
-sub pendingUploads( $self ) {
+sub pendingUploads {
+    my ($self) = @_;
+
     my @files;
     my %uploads;
 
@@ -858,7 +905,12 @@ It defaults to C<time>.
 
 =cut
 
-sub staleUploads( $self, $timeout = 3600, $now = time ) {
+sub staleUploads {
+    my ( $self, $timeout, $now ) = @_;
+
+    $timeout //= 3600;
+    $now     //= time;
+
     my $cutoff = $now - $timeout;
     my %mtime;
     my @files = reverse sort $self->pendingUploads();
@@ -902,7 +954,12 @@ will delete files from another instance.
 
 =cut
 
-sub purgeStaleOrInvalid($self, $timeout = 3600, $now = time ) {
+sub purgeStaleOrInvalid {
+    my ($self, $timeout, $now ) = @_;
+
+    $timeout //= 3600;
+    $now     //= time;
+
     # First, kill off all stale files
     my @errors;
     for my $f ($self->staleUploads( $timeout, $now )) {

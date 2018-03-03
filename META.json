@@ -34,12 +34,14 @@
          "requires" : {
             "Carp" : "0",
             "Data::Dumper" : "0",
-            "Filter::signatures" : "0.04",
             "JSON" : "0",
-            "MIME::Detect" : "0",
             "Test::More" : "0",
-            "Text::CleanFragment" : "0",
-            "perl" : "5.006"
+            "perl" : "5.010"
+         },
+         "recommends" : {
+            "Filter::signatures" : "0.10",
+            "MIME::Detect" : "0",
+            "Text::CleanFragment" : "0"
          }
       }
    },

@@ -42,6 +42,7 @@ my @parameter_names = (
     'flowChunkNumber', # The index of the chunk in the current upload.
                        # First chunk is 1 (no base-0 counting here).
     'flowTotalChunks', # The total number of chunks.
+    'flowCurrentChunkSize', # Current chunk size
     'flowChunkSize', # The general chunk size. Using this value and
                      # flowTotalSize you can calculate the total number of
                      # chunks. Please note that the size of the data received in
