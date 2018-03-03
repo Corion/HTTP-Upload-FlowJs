@@ -13,9 +13,20 @@ perl:
   - "5.26"
   - "blead"
 
+env:
+  - WITHOUT_RECOMMENDS=0
+  - WITHOUT_RECOMMENDS=1
+
 matrix:
   allow_failures:
     - perl: blead
+  exclude:
+    - perl: "5.10"
+      env: WITHOUT_RECOMMENDS=1
+    - perl: "5.12"
+      env: WITHOUT_RECOMMENDS=1
+    - perl: "5.14"
+      env: WITHOUT_RECOMMENDS=1
 
 sudo: false
 
@@ -27,6 +38,11 @@ before_install:
   - build-dist
   - cd $BUILD_DIR
   - cpan-install ExtUtils::MakeMaker~6.68
+  - if [ "$WITHOUT_RECOMMENDS" = "1" ]; then
+        for f in "META.json" "META.yml" "Makefile.PL"; do
+            cat $f | grep -P -v 'Filter::signatures|MIME::Detect|Text::CleanFragment|^recommends:' > $$ && mv -f $$ $f;
+        done;
+    fi
   - cpan-install --deps
 
 script:

@@ -9,7 +9,7 @@ require Exporter;
 @ISA = qw(Exporter);
 @EXPORT_OK = qw(clean_fragment mime_detect);
 
-use feature qw(fc);
+use if $] >= 5.016, feature => qw(fc);
 use Unicode::Normalize;
 
 BEGIN {
@@ -19,6 +19,8 @@ BEGIN {
         my $subname = __PACKAGE__ . '::clean_fragment';
         no strict 'refs';
         if ( $@ ) {
+            die "Need Text::CleanFragment or Perl >= 5.016\n\n" if $] < 5.016;
+
             *{$subname} = \&clean_fragment_fallback;
         }
         else {
